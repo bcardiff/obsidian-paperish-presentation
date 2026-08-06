@@ -19,6 +19,7 @@ export class PaperPresentView extends ItemView {
 	private renderSeq = 0;
 	private observer: MutationObserver | null = null;
 	private repartitionTimer: number | null = null;
+	private barSwapTimer: number | null = null;
 	private lastTrail: HTMLElement[] = [];
 
 	constructor(leaf: WorkspaceLeaf, plugin: PaperPresentPlugin) {
@@ -93,6 +94,10 @@ export class PaperPresentView extends ItemView {
 
 	async onClose(): Promise<void> {
 		this.stopObserver();
+		if (this.barSwapTimer !== null) {
+			window.clearTimeout(this.barSwapTimer);
+			this.barSwapTimer = null;
+		}
 		if (this.renderComponent) this.removeChild(this.renderComponent);
 		this.renderComponent = null;
 	}
@@ -126,6 +131,7 @@ export class PaperPresentView extends ItemView {
 		if (trailsEqual(trail, this.lastTrail)) return; // no flicker when unchanged (§6)
 		this.lastTrail = trail;
 		const swap = () => {
+			this.barSwapTimer = null;
 			this.barEl.empty();
 			this.barEl.appendChild(buildTrailContent(trail));
 			this.barEl.removeClass('pp-bar-fading');
@@ -134,7 +140,8 @@ export class PaperPresentView extends ItemView {
 			swap(); // nothing to fade from
 		} else {
 			this.barEl.addClass('pp-bar-fading');
-			window.setTimeout(swap, 120); // matches the CSS transition duration
+			if (this.barSwapTimer !== null) window.clearTimeout(this.barSwapTimer);
+			this.barSwapTimer = window.setTimeout(swap, 120); // matches the CSS transition duration
 		}
 	}
 
