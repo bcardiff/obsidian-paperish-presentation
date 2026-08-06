@@ -1,5 +1,5 @@
 import { Plugin } from 'obsidian';
-import { DEFAULT_SETTINGS, PaperPresentSettings } from './settings';
+import { DEFAULT_SETTINGS, PaperPresentSettings, PaperPresentSettingTab } from './settings';
 import { PaperPresentView, VIEW_TYPE_PAPER_PRESENT } from './view';
 
 export default class PaperPresentPlugin extends Plugin {
@@ -20,6 +20,8 @@ export default class PaperPresentPlugin extends Plugin {
 				return true;
 			},
 		});
+
+		this.addSettingTab(new PaperPresentSettingTab(this.app, this));
 	}
 
 	async openPresentation(filePath: string) {
@@ -38,5 +40,11 @@ export default class PaperPresentPlugin extends Plugin {
 
 	async saveSettings() {
 		await this.saveData(this.settings);
+	}
+
+	notifySettingsChanged(breakAffecting: boolean) {
+		for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_PAPER_PRESENT)) {
+			if (leaf.view instanceof PaperPresentView) leaf.view.onSettingsChanged(breakAffecting);
+		}
 	}
 }

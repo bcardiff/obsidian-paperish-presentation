@@ -21,6 +21,7 @@ export class PaperPresentView extends ItemView {
 	private repartitionTimer: number | null = null;
 	private barSwapTimer: number | null = null;
 	private lastTrail: HTMLElement[] = [];
+	private appliedExtraClasses: string[] = [];
 
 	constructor(leaf: WorkspaceLeaf, plugin: PaperPresentPlugin) {
 		super(leaf);
@@ -123,6 +124,10 @@ export class PaperPresentView extends ItemView {
 		root.toggleClass('pp-force-light', s.colorScheme === 'light');
 		root.setAttribute('data-pp-unrevealed', s.unrevealedStyle);
 		root.setAttribute('data-pp-valign', s.verticalAlign);
+		const extra = this.plugin.settings.extraClasses.split(/\s+/).filter((c) => c.length > 0);
+		for (const c of this.appliedExtraClasses) this.contentEl.removeClass(c);
+		for (const c of extra) this.contentEl.addClass(c);
+		this.appliedExtraClasses = extra;
 	}
 
 	private displayedTrail(): HTMLElement[] {
@@ -237,6 +242,17 @@ export class PaperPresentView extends ItemView {
 		applyPosition(this.slides, this.pos);
 		this.updateContextBar();
 		this.updateProgress();
+	}
+
+	onSettingsChanged(breakAffecting: boolean): void {
+		this.applySettings();
+		if (breakAffecting) {
+			this.repartitionPreservingPosition();
+		} else {
+			applyPosition(this.slides, this.pos);
+			this.updateContextBar();
+			this.updateProgress();
+		}
 	}
 
 	private setPos(pos: DeckPosition): void {
