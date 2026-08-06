@@ -2,6 +2,7 @@ import { Component, ItemView, MarkdownRenderer, Scope, TFile, ViewStateResult, W
 import type PaperPresentPlugin from './main';
 import { partition, PartitionOptions, Slide } from './partition';
 import { anchorOf, applyPosition, DeckPosition, first, last, next, positionForAnchor, prev } from './reveal';
+import { buildTrailContent, trailsEqual } from './contextbar';
 
 export const VIEW_TYPE_PAPER_PRESENT = 'paper-present-view';
 
@@ -18,6 +19,7 @@ export class PaperPresentView extends ItemView {
 	private renderSeq = 0;
 	private observer: MutationObserver | null = null;
 	private repartitionTimer: number | null = null;
+	private lastTrail: HTMLElement[] = [];
 
 	constructor(leaf: WorkspaceLeaf, plugin: PaperPresentPlugin) {
 		super(leaf);
@@ -110,6 +112,32 @@ export class PaperPresentView extends ItemView {
 		root.setAttribute('data-pp-valign', s.verticalAlign);
 	}
 
+	private displayedTrail(): HTMLElement[] {
+		const s = this.plugin.settings;
+		const slide = this.slides[this.pos.slide];
+		if (!slide || s.contextBarContent === 'off') return [];
+		const trail = [...slide.trail];
+		if (s.contextBarContent === 'ancestors-current' && slide.ownHeading) trail.push(slide.ownHeading);
+		return trail;
+	}
+
+	private updateContextBar(): void {
+		const trail = this.displayedTrail();
+		if (trailsEqual(trail, this.lastTrail)) return; // no flicker when unchanged (§6)
+		this.lastTrail = trail;
+		const swap = () => {
+			this.barEl.empty();
+			this.barEl.appendChild(buildTrailContent(trail));
+			this.barEl.removeClass('pp-bar-fading');
+		};
+		if (this.barEl.childElementCount === 0) {
+			swap(); // nothing to fade from
+		} else {
+			this.barEl.addClass('pp-bar-fading');
+			window.setTimeout(swap, 120); // matches the CSS transition duration
+		}
+	}
+
 	private async renderFile(): Promise<void> {
 		this.stopObserver();
 		const file = this.filePath ? this.app.vault.getFileByPath(this.filePath) : null;
@@ -134,6 +162,7 @@ export class PaperPresentView extends ItemView {
 		this.repartition();
 		this.pos = first();
 		applyPosition(this.slides, this.pos);
+		this.updateContextBar();
 		this.startObserver();
 		this.contentEl.removeClass('pp-loading');
 	}
@@ -190,13 +219,17 @@ export class PaperPresentView extends ItemView {
 		this.repartition();
 		this.pos = positionForAnchor(this.slides, anchor, this.pos);
 		applyPosition(this.slides, this.pos);
+		this.updateContextBar();
 	}
 
 	private setPos(pos: DeckPosition): void {
 		const slideChanged = pos.slide !== this.pos.slide;
 		this.pos = pos;
 		applyPosition(this.slides, pos);
-		if (slideChanged) this.contentContainer.scrollTop = 0;
+		if (slideChanged) {
+			this.contentContainer.scrollTop = 0;
+			this.updateContextBar();
+		}
 	}
 
 	private advance(): false {
