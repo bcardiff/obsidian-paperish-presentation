@@ -146,3 +146,45 @@
 .paper-present .pp-fullscreen-btn:hover {
 	opacity: 1;
 }
+
+/* Paper feel (§9) */
+.paper-present .pp-doc :is(h1, h2, h3, h4, h5, h6) {
+	font-weight: 700;
+	line-height: 1.2;
+}
+.paper-present .pp-doc h1 {
+	font-size: 2em;
+}
+.paper-present .pp-doc h2 {
+	font-size: 1.6em;
+}
+
+/* Full-bleed media (§9): centered, may exceed the column, capped height */
+.paper-present.pp-full-bleed .pp-doc :is(img, video) {
+	display: block;
+	max-width: min(88vw, 100vw - 4rem);
+	max-height: var(--pp-media-max-h);
+	object-fit: contain;
+	margin-inline: auto;
+}
+.paper-present.pp-full-bleed .pp-doc p > img:only-child {
+	margin-left: 50%;
+	transform: translateX(-50%);
+}
+.paper-present:not(.pp-full-bleed) .pp-doc :is(img, video) {
+	max-width: 100%;
+	max-height: var(--pp-media-max-h);
+	object-fit: contain;
+}
+
+/* Forced color scheme (§9): self-contained neutral palette, never flips the app theme */
+.paper-present.pp-force-dark {
+	color-scheme: dark;
+	background-color: #1e1e1e;
+	color: #dcdcdc;
+}
+.paper-present.pp-force-light {
+	color-scheme: light;
+	background-color: #ffffff;
+	color: #1f1f1f;
+}
