@@ -90,6 +90,16 @@ export class PaperishPresentationView extends ItemView {
 			if (window.getSelection()?.toString()) return; // don't fight text selection (§7)
 			const target = evt.target as HTMLElement;
 			if (target.closest('a, button, input, textarea, video, audio, iframe, summary')) return;
+			// Clicking a dimmed neighbor slide jumps to it (§12.2).
+			const slideEl = target.closest('[data-pp-slide]');
+			if (slideEl) {
+				const idx = Number(slideEl.getAttribute('data-pp-slide'));
+				if (Number.isFinite(idx) && idx !== this.pos.slide) {
+					const fragments = this.slides[idx]?.fragments.length ?? 0;
+					this.setPos({ slide: idx, step: idx < this.pos.slide ? fragments - 1 : -1 });
+					return;
+				}
+			}
 			this.advance();
 		});
 		const fsBtn = this.contentEl.createEl('button', { cls: 'pp-fullscreen-btn', attr: { 'aria-label': 'Toggle fullscreen' } });
@@ -185,6 +195,7 @@ export class PaperishPresentationView extends ItemView {
 			applyPosition(this.slides, this.pos);
 			this.updateContextBar();
 			this.updateProgress();
+			this.scrollToCurrent(false);
 			this.startObserver();
 		} finally {
 			if (seq === this.renderSeq) this.contentEl.removeClass('pp-loading');
@@ -245,6 +256,7 @@ export class PaperishPresentationView extends ItemView {
 		applyPosition(this.slides, this.pos);
 		this.updateContextBar();
 		this.updateProgress();
+		this.scrollToCurrent(false); // content may have shifted; re-anchor without animation
 	}
 
 	onSettingsChanged(breakAffecting: boolean): void {
@@ -255,6 +267,7 @@ export class PaperishPresentationView extends ItemView {
 			applyPosition(this.slides, this.pos);
 			this.updateContextBar();
 			this.updateProgress();
+			this.scrollToCurrent(false); // e.g. verticalAlign changed
 		}
 	}
 
@@ -264,9 +277,33 @@ export class PaperishPresentationView extends ItemView {
 		applyPosition(this.slides, pos);
 		this.updateProgress();
 		if (slideChanged) {
-			this.contentContainer.scrollTop = 0;
+			this.scrollToCurrent(true);
 			this.updateContextBar();
 		}
+	}
+
+	/** Scroll the current slide to the viewport position given by verticalAlign (§12.2). */
+	private scrollToCurrent(smooth: boolean): void {
+		const els = this.slides[this.pos.slide]?.elements;
+		if (!els || els.length === 0) return;
+		const firstEl = els[0]!;
+		const lastEl = els[els.length - 1]!;
+		const docTop = this.renderContainer.offsetTop;
+		const top = docTop + firstEl.offsetTop;
+		const bottom = docTop + lastEl.offsetTop + lastEl.offsetHeight;
+		const viewport = this.contentContainer.clientHeight;
+		let target: number;
+		if (this.plugin.settings.verticalAlign === 'center' && bottom - top <= viewport) {
+			target = (top + bottom) / 2 - viewport / 2;
+		} else {
+			// top alignment, and the fallback for slides taller than the viewport
+			target = top - Math.min(48, viewport * 0.06);
+		}
+		const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+		this.contentContainer.scrollTo({
+			top: Math.max(0, target),
+			behavior: smooth && !reduced ? 'smooth' : 'auto',
+		});
 	}
 
 	private toggleFullscreen(): false {

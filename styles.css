@@ -43,21 +43,19 @@
 	line-height: 1.45;
 }
 
-.paperish-presentation[data-pp-valign='center'] .pp-content {
-	display: flex;
-	flex-direction: column;
-}
+/* Scroll model (§12.2): center mode pads the column so first/last slides can
+   sit at viewport center; the actual positioning is scroll-driven (view.ts). */
 .paperish-presentation[data-pp-valign='center'] .pp-doc {
-	margin: auto;
-	width: 100%;
+	padding-block: 42vh;
 }
 
-/* Off-slide: hidden but measurable — NEVER display:none (§2). */
+/* Off-slide (§12.2): neighbors stay in flow, dimmed — never hidden, never
+   display:none. Navigation scrolls the current slide into view. */
+.paperish-presentation .pp-doc [data-pp-slide] {
+	transition: opacity 200ms ease-out;
+}
 .paperish-presentation .pp-doc .pp-offslide {
-	visibility: hidden;
-	position: absolute;
-	top: 0;
-	width: 100%;
+	opacity: 0.15;
 }
 
 /* Presentation hide-list (§9) — keep in one place, it will grow. */
@@ -73,10 +71,13 @@
 .paperish-presentation .pp-doc [data-pp-frag] {
 	transition: opacity 200ms ease-out, transform 200ms ease-out;
 }
-.paperish-presentation[data-pp-unrevealed='dimmed'] .pp-doc [data-pp-frag]:not(.pp-revealed):not(.pp-offslide) {
+/* Un-revealed styling applies only within the current slide — off-slide
+   neighbors keep their uniform dim (the :not(.pp-offslide *) guard covers
+   list-items fragments inside a dimmed top-level list). */
+.paperish-presentation[data-pp-unrevealed='dimmed'] .pp-doc [data-pp-frag]:not(.pp-revealed):not(.pp-offslide):not(.pp-offslide *) {
 	opacity: 0.25;
 }
-.paperish-presentation[data-pp-unrevealed='hidden'] .pp-doc [data-pp-frag]:not(.pp-revealed):not(.pp-offslide) {
+.paperish-presentation[data-pp-unrevealed='hidden'] .pp-doc [data-pp-frag]:not(.pp-revealed):not(.pp-offslide):not(.pp-offslide *) {
 	opacity: 0;
 	visibility: hidden;
 	transform: translateY(8px);
