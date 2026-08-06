@@ -70,6 +70,9 @@ export function partition(container: HTMLElement, options: PartitionOptions): Sl
 	};
 
 	for (const child of Array.from(container.children)) {
+		// Native `instanceof` (not .instanceOf()): this module is unit-tested under jsdom,
+		// which lacks Obsidian's runtime .instanceOf() polyfill — see the eslint.config.mts
+		// override for src/partition.ts.
 		if (!(child instanceof HTMLElement)) continue;
 
 		if (child.tagName === 'HR' && options.hrBreaks) {

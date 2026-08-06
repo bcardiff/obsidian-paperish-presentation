@@ -209,7 +209,7 @@ export class PaperPresentView extends ItemView {
 					m.target === this.renderContainer ||
 					// list-items mode: li added/removed inside a top-level list changes fragments
 					(this.plugin.settings.revealMode === 'list-items' &&
-						m.target instanceof HTMLElement &&
+						m.target.instanceOf(HTMLElement) &&
 						m.target.parentElement === this.renderContainer &&
 						(m.target.tagName === 'UL' || m.target.tagName === 'OL')),
 			);

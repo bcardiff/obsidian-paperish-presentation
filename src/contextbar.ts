@@ -12,6 +12,9 @@ export function trailsEqual(a: HTMLElement[], b: HTMLElement[]): boolean {
 }
 
 export function buildTrailContent(trail: HTMLElement[]): DocumentFragment {
+	// Native DOM APIs (not createFragment/createSpan): this module is unit-tested under
+	// jsdom, which lacks Obsidian's runtime createFragment/createSpan polyfills — see the
+	// eslint.config.mts override for src/contextbar.ts.
 	const frag = document.createDocumentFragment();
 	trail.forEach((h, i) => {
 		if (i > 0) {
