@@ -1,7 +1,7 @@
 import { Component, ItemView, MarkdownRenderer, Scope, TFile, ViewStateResult, WorkspaceLeaf } from 'obsidian';
 import type PaperPresentPlugin from './main';
 import { partition, PartitionOptions, Slide } from './partition';
-import { applyPosition, DeckPosition, first } from './reveal';
+import { applyPosition, DeckPosition, first, last, next, prev } from './reveal';
 
 export const VIEW_TYPE_PAPER_PRESENT = 'paper-present-view';
 
@@ -22,6 +22,22 @@ export class PaperPresentView extends ItemView {
 		this.plugin = plugin;
 		this.navigation = true;
 		this.scope = new Scope(this.app.scope);
+		for (const key of ['ArrowRight', 'ArrowDown', ' ', 'PageDown']) {
+			this.scope.register([], key, () => this.advance());
+		}
+		for (const key of ['ArrowLeft', 'ArrowUp', 'PageUp']) {
+			this.scope.register([], key, () => this.back());
+		}
+		this.scope.register(['Shift'], ' ', () => this.back());
+		this.scope.register([], 'Home', () => {
+			this.setPos(first());
+			return false;
+		});
+		this.scope.register([], 'End', () => {
+			this.setPos(last(this.slides));
+			return false;
+		});
+		this.scope.register([], 'Escape', () => this.handleEscape());
 	}
 
 	getViewType(): string {
@@ -62,6 +78,13 @@ export class PaperPresentView extends ItemView {
 		this.progressEl = root.createDiv({ cls: 'pp-progress' });
 		this.applySettings();
 		if (this.filePath) await this.renderFile();
+		this.registerDomEvent(this.contentContainer, 'click', (evt: MouseEvent) => {
+			if (!this.plugin.settings.advanceOnClick) return;
+			if (window.getSelection()?.toString()) return; // don't fight text selection (§7)
+			const target = evt.target as HTMLElement;
+			if (target.closest('a, button, input, textarea, video, audio, iframe, summary')) return;
+			this.advance();
+		});
 	}
 
 	async onClose(): Promise<void> {
@@ -121,5 +144,43 @@ export class PaperPresentView extends ItemView {
 		const raw = typeof fm?.['slides-break'] === 'string' ? fm['slides-break'].toLowerCase() : null;
 		const breakLevel = raw === 'h1' ? 1 : raw === 'h2' ? 2 : raw === 'h3' ? 3 : s.breakLevel;
 		return { breakLevel, hrBreaks: s.hrBreaks, revealMode: s.revealMode };
+	}
+
+	private setPos(pos: DeckPosition): void {
+		const slideChanged = pos.slide !== this.pos.slide;
+		this.pos = pos;
+		applyPosition(this.slides, pos);
+		if (slideChanged) this.contentContainer.scrollTop = 0;
+	}
+
+	private advance(): false {
+		this.setPos(next(this.slides, this.pos));
+		return false;
+	}
+
+	private back(): false {
+		this.setPos(prev(this.slides, this.pos));
+		return false;
+	}
+
+	private handleEscape(): false {
+		if (document.fullscreenElement) return false; // browser exits fullscreen on this press
+		if (this.plugin.settings.escBehavior === 'source') {
+			void this.returnToSource();
+		} else {
+			this.leaf.detach();
+		}
+		return false;
+	}
+
+	private async returnToSource(): Promise<void> {
+		const path = this.filePath;
+		const heading = this.slides[this.pos.slide]?.ownHeading;
+		const headingText = heading?.getAttribute('data-heading') ?? heading?.textContent?.trim() ?? '';
+		if (path) {
+			const linktext = headingText ? `${path}#${headingText}` : path;
+			await this.app.workspace.openLinkText(linktext, '', false);
+		}
+		this.leaf.detach();
 	}
 }
