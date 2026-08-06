@@ -1,7 +1,7 @@
 import { Component, ItemView, MarkdownRenderer, Scope, TFile, ViewStateResult, WorkspaceLeaf } from 'obsidian';
 import type PaperPresentPlugin from './main';
 import { partition, PartitionOptions, Slide } from './partition';
-import { applyPosition, DeckPosition, first, last, next, prev } from './reveal';
+import { anchorOf, applyPosition, DeckPosition, first, last, next, positionForAnchor, prev } from './reveal';
 
 export const VIEW_TYPE_PAPER_PRESENT = 'paper-present-view';
 
@@ -16,6 +16,8 @@ export class PaperPresentView extends ItemView {
 	private progressEl!: HTMLElement;
 	private renderComponent: Component | null = null;
 	private renderSeq = 0;
+	private observer: MutationObserver | null = null;
+	private repartitionTimer: number | null = null;
 
 	constructor(leaf: WorkspaceLeaf, plugin: PaperPresentPlugin) {
 		super(leaf);
@@ -88,6 +90,7 @@ export class PaperPresentView extends ItemView {
 	}
 
 	async onClose(): Promise<void> {
+		this.stopObserver();
 		if (this.renderComponent) this.removeChild(this.renderComponent);
 		this.renderComponent = null;
 	}
@@ -130,6 +133,7 @@ export class PaperPresentView extends ItemView {
 		this.repartition();
 		this.pos = first();
 		applyPosition(this.slides, this.pos);
+		this.startObserver();
 		this.contentEl.removeClass('pp-loading');
 	}
 
@@ -144,6 +148,47 @@ export class PaperPresentView extends ItemView {
 		const raw = typeof fm?.['slides-break'] === 'string' ? fm['slides-break'].toLowerCase() : null;
 		const breakLevel = raw === 'h1' ? 1 : raw === 'h2' ? 2 : raw === 'h3' ? 3 : s.breakLevel;
 		return { breakLevel, hrBreaks: s.hrBreaks, revealMode: s.revealMode };
+	}
+
+	private startObserver(): void {
+		this.stopObserver();
+		this.observer = new MutationObserver((mutations) => {
+			const relevant = mutations.some(
+				(m) =>
+					m.target === this.renderContainer ||
+					// list-items mode: li added/removed inside a top-level list changes fragments
+					(this.plugin.settings.revealMode === 'list-items' &&
+						m.target instanceof HTMLElement &&
+						m.target.parentElement === this.renderContainer &&
+						(m.target.tagName === 'UL' || m.target.tagName === 'OL')),
+			);
+			if (relevant) this.scheduleRepartition();
+		});
+		this.observer.observe(this.renderContainer, { childList: true, subtree: true });
+	}
+
+	private stopObserver(): void {
+		this.observer?.disconnect();
+		this.observer = null;
+		if (this.repartitionTimer !== null) {
+			window.clearTimeout(this.repartitionTimer);
+			this.repartitionTimer = null;
+		}
+	}
+
+	private scheduleRepartition(): void {
+		if (this.repartitionTimer !== null) window.clearTimeout(this.repartitionTimer);
+		this.repartitionTimer = window.setTimeout(() => {
+			this.repartitionTimer = null;
+			this.repartitionPreservingPosition();
+		}, 150); // debounce (§2: 100–250ms)
+	}
+
+	repartitionPreservingPosition(): void {
+		const anchor = anchorOf(this.slides, this.pos);
+		this.repartition();
+		this.pos = positionForAnchor(this.slides, anchor, this.pos);
+		applyPosition(this.slides, this.pos);
 	}
 
 	private setPos(pos: DeckPosition): void {
