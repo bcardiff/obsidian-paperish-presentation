@@ -111,6 +111,7 @@ export class PaperPresentView extends ItemView {
 	}
 
 	private async renderFile(): Promise<void> {
+		this.stopObserver();
 		const file = this.filePath ? this.app.vault.getFileByPath(this.filePath) : null;
 		if (!(file instanceof TFile)) return;
 
