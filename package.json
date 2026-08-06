@@ -1,5 +1,5 @@
 {
-	"name": "paper-present",
+	"name": "paperish-presentation",
 	"version": "0.1.0",
 	"description": "Present the current note as minimal, typography-driven slides split at headings, preserving all rendered content.",
 	"main": "main.js",

@@ -1,10 +1,10 @@
-# Paper Present
+# Paperish Presentation
 
 Present any Obsidian note as minimal, typography-driven slides — the way Dropbox Paper did it. The deck is a projection of your rendered note: everything that renders in reading view (Bases embeds, LaTeX, callouts, embeds, community-plugin output) renders on your slides.
 
 ## Usage
 
-Run **Paper Present: Present current note** from the command palette. The note opens as slides in a new tab, split at headings (H2 by default) and `---` rules.
+Run **Paperish Presentation: Present current note** from the command palette. The note opens as slides in a new tab, split at headings (H2 by default) and `---` rules.
 
 - **Next:** →, ↓, Space, PageDown, or click/tap
 - **Previous:** ←, ↑, Shift+Space, PageUp
@@ -25,7 +25,7 @@ Frontmatter `slides-break: h1 | h2 | h3` overrides the break level for that note
 - Some themes misbehave at large font scales. Use the "Extra container classes" setting plus a CSS snippet to fine-tune, e.g.:
 
   ```css
-  .paper-present.my-deck .pp-doc {
+  .paperish-presentation.my-deck .pp-doc {
   	--pp-media-max-h: 80vh;
   	letter-spacing: -0.01em;
   }

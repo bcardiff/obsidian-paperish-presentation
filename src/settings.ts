@@ -1,5 +1,5 @@
 import { App, PluginSettingTab, Setting } from 'obsidian';
-import type PaperPresentPlugin from './main';
+import type PaperishPresentationPlugin from './main';
 
 export type BreakLevel = 1 | 2 | 3;
 export type RevealMode = 'none' | 'blocks' | 'list-items';
@@ -11,7 +11,7 @@ export type ColorScheme = 'vault' | 'light' | 'dark';
 export type ProgressIndicator = 'none' | 'bar' | 'counter';
 export type EscBehavior = 'close' | 'source';
 
-export interface PaperPresentSettings {
+export interface PaperishPresentationSettings {
 	breakLevel: BreakLevel;
 	hrBreaks: boolean;
 	revealMode: RevealMode;
@@ -29,7 +29,7 @@ export interface PaperPresentSettings {
 	extraClasses: string;
 }
 
-export const DEFAULT_SETTINGS: PaperPresentSettings = {
+export const DEFAULT_SETTINGS: PaperishPresentationSettings = {
 	breakLevel: 2,
 	hrBreaks: true,
 	revealMode: 'blocks',
@@ -38,7 +38,7 @@ export const DEFAULT_SETTINGS: PaperPresentSettings = {
 	contextBarPosition: 'bottom',
 	fontScale: 1.4,
 	maxWidth: 42,
-	verticalAlign: 'top',
+	verticalAlign: 'center',
 	fullBleedMedia: true,
 	colorScheme: 'vault',
 	advanceOnClick: true,
@@ -47,10 +47,10 @@ export const DEFAULT_SETTINGS: PaperPresentSettings = {
 	extraClasses: '',
 };
 
-export class PaperPresentSettingTab extends PluginSettingTab {
-	plugin: PaperPresentPlugin;
+export class PaperishPresentationSettingTab extends PluginSettingTab {
+	plugin: PaperishPresentationPlugin;
 
-	constructor(app: App, plugin: PaperPresentPlugin) {
+	constructor(app: App, plugin: PaperishPresentationPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}

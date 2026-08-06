@@ -1,6 +1,6 @@
-/* Paper Present — all rules namespaced under .paper-present (§9) */
+/* Paperish Presentation — all rules namespaced under .paperish-presentation (§9) */
 
-.paper-present {
+.paperish-presentation {
 	--pp-font-scale: 1.4;
 	--pp-max-width: 42rem;
 	--pp-media-max-h: 70vh;
@@ -12,48 +12,48 @@
 	padding: 0;
 }
 
-.paper-present.pp-bar-bottom {
+.paperish-presentation.pp-bar-bottom {
 	grid-template-rows: 1fr auto;
 }
-.paper-present.pp-bar-bottom .pp-context-bar {
+.paperish-presentation.pp-bar-bottom .pp-context-bar {
 	order: 2;
 }
-.paper-present.pp-bar-off {
+.paperish-presentation.pp-bar-off {
 	grid-template-rows: 1fr;
 }
-.paper-present.pp-bar-off .pp-context-bar {
+.paperish-presentation.pp-bar-off .pp-context-bar {
 	display: none;
 }
 
-.paper-present.pp-loading .pp-content {
+.paperish-presentation.pp-loading .pp-content {
 	visibility: hidden;
 }
 
-.paper-present .pp-content {
+.paperish-presentation .pp-content {
 	overflow-y: auto;
 	position: relative;
 }
 
-.paper-present .pp-doc {
+.paperish-presentation .pp-doc {
 	position: relative;
 	max-width: var(--pp-max-width);
 	margin: 0 auto;
 	padding: 6vh 2rem;
 	font-size: calc(1rem * var(--pp-font-scale));
-	line-height: 1.5;
+	line-height: 1.45;
 }
 
-.paper-present[data-pp-valign='center'] .pp-content {
+.paperish-presentation[data-pp-valign='center'] .pp-content {
 	display: flex;
 	flex-direction: column;
 }
-.paper-present[data-pp-valign='center'] .pp-doc {
+.paperish-presentation[data-pp-valign='center'] .pp-doc {
 	margin: auto;
 	width: 100%;
 }
 
 /* Off-slide: hidden but measurable — NEVER display:none (§2). */
-.paper-present .pp-doc .pp-offslide {
+.paperish-presentation .pp-doc .pp-offslide {
 	visibility: hidden;
 	position: absolute;
 	top: 0;
@@ -61,35 +61,35 @@
 }
 
 /* Presentation hide-list (§9) — keep in one place, it will grow. */
-.paper-present .pp-doc hr,
-.paper-present .pp-doc [data-pp-hr],
-.paper-present .pp-doc .heading-collapse-indicator,
-.paper-present .pp-doc .collapse-indicator,
-.paper-present .pp-doc .edit-block-button {
+.paperish-presentation .pp-doc hr,
+.paperish-presentation .pp-doc [data-pp-hr],
+.paperish-presentation .pp-doc .heading-collapse-indicator,
+.paperish-presentation .pp-doc .collapse-indicator,
+.paperish-presentation .pp-doc .edit-block-button {
 	display: none;
 }
 
 /* Fragment reveal (§5) */
-.paper-present .pp-doc [data-pp-frag] {
+.paperish-presentation .pp-doc [data-pp-frag] {
 	transition: opacity 200ms ease-out, transform 200ms ease-out;
 }
-.paper-present[data-pp-unrevealed='dimmed'] .pp-doc [data-pp-frag]:not(.pp-revealed):not(.pp-offslide) {
+.paperish-presentation[data-pp-unrevealed='dimmed'] .pp-doc [data-pp-frag]:not(.pp-revealed):not(.pp-offslide) {
 	opacity: 0.25;
 }
-.paper-present[data-pp-unrevealed='hidden'] .pp-doc [data-pp-frag]:not(.pp-revealed):not(.pp-offslide) {
+.paperish-presentation[data-pp-unrevealed='hidden'] .pp-doc [data-pp-frag]:not(.pp-revealed):not(.pp-offslide) {
 	opacity: 0;
 	visibility: hidden;
 	transform: translateY(8px);
 }
 @media (prefers-reduced-motion: reduce) {
-	.paper-present .pp-doc [data-pp-frag] {
+	.paperish-presentation .pp-doc [data-pp-frag] {
 		transition: none;
 		transform: none !important;
 	}
 }
 
 /* Context bar (§6) */
-.paper-present .pp-context-bar {
+.paperish-presentation .pp-context-bar {
 	padding: 0.5rem 1.5rem;
 	min-height: 2.2rem;
 	display: flex;
@@ -102,19 +102,19 @@
 	text-overflow: ellipsis;
 	transition: opacity 120ms ease;
 }
-.paper-present .pp-context-bar.pp-bar-fading {
+.paperish-presentation .pp-context-bar.pp-bar-fading {
 	opacity: 0;
 }
-.paper-present .pp-trail-sep {
+.paperish-presentation .pp-trail-sep {
 	color: var(--text-faint);
 }
 
 /* Progress indicator (§7) */
-.paper-present .pp-progress[data-mode='none'],
-.paper-present .pp-progress:not([data-mode]) {
+.paperish-presentation .pp-progress[data-mode='none'],
+.paperish-presentation .pp-progress:not([data-mode]) {
 	display: none;
 }
-.paper-present .pp-progress[data-mode='bar'] {
+.paperish-presentation .pp-progress[data-mode='bar'] {
 	position: absolute;
 	left: 0;
 	bottom: 0;
@@ -124,7 +124,7 @@
 	transition: width 200ms ease-out;
 	z-index: 10;
 }
-.paper-present .pp-progress[data-mode='counter'] {
+.paperish-presentation .pp-progress[data-mode='counter'] {
 	position: absolute;
 	right: 1rem;
 	bottom: 0.6rem;
@@ -133,7 +133,7 @@
 	z-index: 10;
 }
 
-.paper-present .pp-fullscreen-btn {
+.paperish-presentation .pp-fullscreen-btn {
 	position: absolute;
 	top: 0.6rem;
 	right: 0.6rem;
@@ -143,47 +143,52 @@
 	box-shadow: none;
 	cursor: pointer;
 }
-.paper-present .pp-fullscreen-btn:hover {
+.paperish-presentation .pp-fullscreen-btn:hover {
 	opacity: 1;
 }
 
-/* Paper feel (§9) */
-.paper-present .pp-doc :is(h1, h2, h3, h4, h5, h6) {
+/* Paperish feel (§9) — grotesk: heavy weights, tight tracking, snug leading */
+.paperish-presentation .pp-doc :is(h1, h2, h3, h4, h5, h6) {
 	font-weight: 700;
-	line-height: 1.2;
+	line-height: 1.1;
+	letter-spacing: -0.015em;
 }
-.paper-present .pp-doc h1 {
-	font-size: 2em;
+.paperish-presentation .pp-doc :is(h1, h2) {
+	font-weight: 800;
+	letter-spacing: -0.02em;
 }
-.paper-present .pp-doc h2 {
+.paperish-presentation .pp-doc h1 {
+	font-size: 2.2em;
+}
+.paperish-presentation .pp-doc h2 {
 	font-size: 1.6em;
 }
 
 /* Full-bleed media (§9): centered, may exceed the column, capped height */
-.paper-present.pp-full-bleed .pp-doc :is(img, video) {
+.paperish-presentation.pp-full-bleed .pp-doc :is(img, video) {
 	display: block;
 	max-width: min(88vw, 100vw - 4rem);
 	max-height: var(--pp-media-max-h);
 	object-fit: contain;
 	margin-inline: auto;
 }
-.paper-present.pp-full-bleed .pp-doc p > img:only-child {
+.paperish-presentation.pp-full-bleed .pp-doc p > img:only-child {
 	margin-left: 50%;
 	transform: translateX(-50%);
 }
-.paper-present:not(.pp-full-bleed) .pp-doc :is(img, video) {
+.paperish-presentation:not(.pp-full-bleed) .pp-doc :is(img, video) {
 	max-width: 100%;
 	max-height: var(--pp-media-max-h);
 	object-fit: contain;
 }
 
 /* Forced color scheme (§9): self-contained neutral palette, never flips the app theme */
-.paper-present.pp-force-dark {
+.paperish-presentation.pp-force-dark {
 	color-scheme: dark;
 	background-color: #1e1e1e;
 	color: #dcdcdc;
 }
-.paper-present.pp-force-light {
+.paperish-presentation.pp-force-light {
 	color-scheme: light;
 	background-color: #ffffff;
 	color: #1f1f1f;

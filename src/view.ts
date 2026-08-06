@@ -1,13 +1,13 @@
 import { Component, ItemView, MarkdownRenderer, Scope, TFile, ViewStateResult, WorkspaceLeaf } from 'obsidian';
-import type PaperPresentPlugin from './main';
+import type PaperishPresentationPlugin from './main';
 import { partition, PartitionOptions, Slide } from './partition';
 import { anchorOf, applyPosition, DeckPosition, first, last, next, positionForAnchor, prev } from './reveal';
 import { buildTrailContent, trailsEqual } from './contextbar';
 
-export const VIEW_TYPE_PAPER_PRESENT = 'paper-present-view';
+export const VIEW_TYPE_PAPERISH_PRESENTATION = 'paperish-presentation-view';
 
-export class PaperPresentView extends ItemView {
-	private plugin: PaperPresentPlugin;
+export class PaperishPresentationView extends ItemView {
+	private plugin: PaperishPresentationPlugin;
 	private filePath: string | null = null;
 	private slides: Slide[] = [];
 	private pos: DeckPosition = first();
@@ -23,7 +23,7 @@ export class PaperPresentView extends ItemView {
 	private lastTrail: HTMLElement[] = [];
 	private appliedExtraClasses: string[] = [];
 
-	constructor(leaf: WorkspaceLeaf, plugin: PaperPresentPlugin) {
+	constructor(leaf: WorkspaceLeaf, plugin: PaperishPresentationPlugin) {
 		super(leaf);
 		this.plugin = plugin;
 		this.navigation = true;
@@ -48,12 +48,12 @@ export class PaperPresentView extends ItemView {
 	}
 
 	getViewType(): string {
-		return VIEW_TYPE_PAPER_PRESENT;
+		return VIEW_TYPE_PAPERISH_PRESENTATION;
 	}
 
 	getDisplayText(): string {
 		const name = this.filePath?.split('/').pop()?.replace(/\.md$/, '');
-		return name ? `Present: ${name}` : 'Paper Present';
+		return name ? `Present: ${name}` : 'Paperish Presentation';
 	}
 
 	getIcon(): string {
@@ -76,7 +76,7 @@ export class PaperPresentView extends ItemView {
 	async onOpen(): Promise<void> {
 		const root = this.contentEl;
 		root.empty();
-		root.addClass('paper-present');
+		root.addClass('paperish-presentation');
 		this.barEl = root.createDiv({ cls: 'pp-context-bar' });
 		this.contentContainer = root.createDiv({ cls: 'pp-content' });
 		this.renderContainer = this.contentContainer.createDiv({
