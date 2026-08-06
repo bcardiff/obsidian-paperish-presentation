@@ -1,5 +1,5 @@
 # vscode
-.vscode 
+.vscode
 
 # Intellij
 *.iml
@@ -31,3 +31,5 @@ devenv.local.yaml
 
 # pre-commit
 .pre-commit-config.yaml
+
+.env
