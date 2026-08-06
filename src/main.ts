@@ -1,9 +1,10 @@
-import { Plugin } from 'obsidian';
+import { MarkdownView, Plugin } from 'obsidian';
 import { DEFAULT_SETTINGS, PaperishPresentationSettings, PaperishPresentationSettingTab } from './settings';
 import { PaperishPresentationView, VIEW_TYPE_PAPERISH_PRESENTATION } from './view';
 
 export default class PaperishPresentationPlugin extends Plugin {
 	settings!: PaperishPresentationSettings;
+	private presentActionEls: HTMLElement[] = [];
 
 	async onload() {
 		await this.loadSettings();
@@ -33,6 +34,29 @@ export default class PaperishPresentationPlugin extends Plugin {
 		});
 
 		this.addSettingTab(new PaperishPresentationSettingTab(this.app, this));
+
+		// A "Present this note" action in every markdown view's tab header.
+		this.app.workspace.onLayoutReady(() => this.addPresentActions());
+		this.registerEvent(this.app.workspace.on('layout-change', () => this.addPresentActions()));
+	}
+
+	onunload() {
+		for (const el of this.presentActionEls) el.remove();
+		this.presentActionEls = [];
+	}
+
+	private addPresentActions() {
+		for (const leaf of this.app.workspace.getLeavesOfType('markdown')) {
+			const view = leaf.view;
+			if (!(view instanceof MarkdownView)) continue;
+			if (view.containerEl.querySelector('.pp-present-action')) continue;
+			const el = view.addAction('presentation', 'Present this note', () => {
+				const file = view.file;
+				if (file) void this.openPresentation(file.path);
+			});
+			el.addClass('pp-present-action');
+			this.presentActionEls.push(el);
+		}
 	}
 
 	async openPresentation(filePath: string) {

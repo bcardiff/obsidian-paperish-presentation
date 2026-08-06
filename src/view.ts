@@ -91,6 +91,7 @@ export class PaperishPresentationView extends ItemView {
 	}
 
 	async onOpen(): Promise<void> {
+		this.addAction('refresh-cw', 'Refresh presentation', () => void this.refresh());
 		const root = this.contentEl;
 		root.empty();
 		root.addClass('paperish-presentation');
