@@ -171,21 +171,24 @@ export class PaperPresentView extends ItemView {
 		this.addChild(this.renderComponent);
 		this.renderContainer.empty();
 
-		let markdown = await this.app.vault.cachedRead(file);
-		if (seq !== this.renderSeq) return;
-		const fmPos = this.app.metadataCache.getFileCache(file)?.frontmatterPosition;
-		if (fmPos) markdown = markdown.slice(fmPos.end.offset).replace(/^\s+/, '');
+		try {
+			let markdown = await this.app.vault.cachedRead(file);
+			if (seq !== this.renderSeq) return;
+			const fmPos = this.app.metadataCache.getFileCache(file)?.frontmatterPosition;
+			if (fmPos) markdown = markdown.slice(fmPos.end.offset).replace(/^\s+/, '');
 
-		await MarkdownRenderer.render(this.app, markdown, this.renderContainer, file.path, this.renderComponent);
-		if (seq !== this.renderSeq) return;
+			await MarkdownRenderer.render(this.app, markdown, this.renderContainer, file.path, this.renderComponent);
+			if (seq !== this.renderSeq) return;
 
-		this.repartition();
-		this.pos = first();
-		applyPosition(this.slides, this.pos);
-		this.updateContextBar();
-		this.updateProgress();
-		this.startObserver();
-		this.contentEl.removeClass('pp-loading');
+			this.repartition();
+			this.pos = first();
+			applyPosition(this.slides, this.pos);
+			this.updateContextBar();
+			this.updateProgress();
+			this.startObserver();
+		} finally {
+			if (seq === this.renderSeq) this.contentEl.removeClass('pp-loading');
+		}
 	}
 
 	private repartition(): void {
