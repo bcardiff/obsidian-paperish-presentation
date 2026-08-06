@@ -181,6 +181,10 @@ export class PaperPresentView extends ItemView {
 			const linktext = headingText ? `${path}#${headingText}` : path;
 			await this.app.workspace.openLinkText(linktext, '', false);
 		}
-		this.leaf.detach();
+		// openLinkText(..., false) reuses the active leaf when possible, which is this
+		// presentation leaf — it now hosts the opened note and this.leaf.view !== this.
+		// Only detach if our leaf still shows the presentation view (i.e. the note was
+		// opened elsewhere); otherwise detaching would destroy the leaf now showing the note.
+		if (this.leaf.view === this) this.leaf.detach();
 	}
 }
