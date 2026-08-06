@@ -90,6 +90,8 @@ export class PaperishPresentationView extends ItemView {
 			if (window.getSelection()?.toString()) return; // don't fight text selection (§7)
 			const target = evt.target as HTMLElement;
 			if (target.closest('a, button, input, textarea, video, audio, iframe, summary')) return;
+			// Expanding/collapsing a callout is not a navigation gesture (§7).
+			if (target.closest('.callout.is-collapsible .callout-title')) return;
 			// Clicking a dimmed neighbor slide jumps to it (§12.2).
 			const slideEl = target.closest('[data-pp-slide]');
 			if (slideEl) {
