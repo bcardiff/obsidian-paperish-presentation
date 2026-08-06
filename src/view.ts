@@ -1,7 +1,19 @@
 import { Component, ItemView, MarkdownRenderer, Scope, TFile, ViewStateResult, WorkspaceLeaf } from 'obsidian';
 import type PaperishPresentationPlugin from './main';
 import { partition, PartitionOptions, Slide } from './partition';
-import { anchorOf, applyPosition, DeckPosition, entryStep, first, last, next, positionForAnchor, prev } from './reveal';
+import {
+	anchorOf,
+	applyPosition,
+	DeckPosition,
+	entryStep,
+	findSlideBySignature,
+	first,
+	last,
+	next,
+	positionForAnchor,
+	prev,
+	slideSignature,
+} from './reveal';
 import { buildTrailContent, trailsEqual } from './contextbar';
 
 export const VIEW_TYPE_PAPERISH_PRESENTATION = 'paperish-presentation-view';
@@ -22,6 +34,7 @@ export class PaperishPresentationView extends ItemView {
 	private barSwapTimer: number | null = null;
 	private lastTrail: HTMLElement[] = [];
 	private appliedExtraClasses: string[] = [];
+	private sourceDirty = false;
 
 	constructor(leaf: WorkspaceLeaf, plugin: PaperishPresentationPlugin) {
 		super(leaf);
@@ -45,6 +58,10 @@ export class PaperishPresentationView extends ItemView {
 		});
 		this.scope.register([], 'Escape', () => this.handleEscape());
 		this.scope.register([], 'f', () => this.toggleFullscreen());
+		this.scope.register([], 'r', () => {
+			void this.refresh();
+			return false;
+		});
 	}
 
 	getViewType(): string {
@@ -105,6 +122,18 @@ export class PaperishPresentationView extends ItemView {
 			}
 			this.advance();
 		});
+		this.registerEvent(
+			this.app.vault.on('modify', (file) => {
+				if (file.path === this.filePath) this.sourceDirty = true;
+			}),
+		);
+		this.registerEvent(
+			this.app.workspace.on('active-leaf-change', (leaf) => {
+				if (leaf === this.leaf && this.sourceDirty && this.plugin.settings.refreshOnFocus) {
+					void this.refresh();
+				}
+			}),
+		);
 		const fsBtn = this.contentEl.createEl('button', { cls: 'pp-fullscreen-btn', attr: { 'aria-label': 'Toggle fullscreen' } });
 		fsBtn.setText('⛶');
 		if (!this.containerEl.requestFullscreen) fsBtn.hide();
@@ -171,8 +200,31 @@ export class PaperishPresentationView extends ItemView {
 		}
 	}
 
+	/**
+	 * Re-render the current file and restore the position via heading
+	 * signature (§10.8) — element identity does not survive a re-render.
+	 */
+	async refresh(): Promise<void> {
+		if (!this.filePath || this.slides.length === 0) {
+			await this.renderFile();
+			return;
+		}
+		const sig = slideSignature(this.slides, this.pos.slide);
+		const step = this.pos.step;
+		await this.renderFile();
+		if (this.slides.length === 0) return;
+		const slide = findSlideBySignature(this.slides, sig);
+		const fragments = this.slides[slide]?.fragments.length ?? 0;
+		this.pos = { slide, step: Math.max(-1, Math.min(step, fragments - 1)) };
+		applyPosition(this.slides, this.pos);
+		this.updateContextBar();
+		this.updateProgress();
+		this.scrollToCurrent(false);
+	}
+
 	private async renderFile(): Promise<void> {
 		this.stopObserver();
+		this.sourceDirty = false;
 		const file = this.filePath ? this.app.vault.getFileByPath(this.filePath) : null;
 		if (!(file instanceof TFile)) return;
 

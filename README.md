@@ -10,6 +10,7 @@ Run **Paperish Presentation: Present current note** from the command palette. Th
 - **Previous:** ←, ↑, Shift+Space, PageUp
 - **First/last slide:** Home / End
 - **Fullscreen:** `f`
+- **Refresh:** `r` (re-renders the note, keeping your place)
 - **Exit:** Esc (returns to the source note at the current heading, configurable)
 
 Within a slide, blocks reveal step by step (configurable: whole slides, blocks, or list items). A context bar shows the ancestor headings of the current slide.
@@ -21,7 +22,7 @@ Frontmatter `slides-break: h1 | h2 | h3` overrides the break level for that note
 ## Notes and limitations (v1)
 
 - Footnotes render at the document end, so they land on the last slide.
-- The presentation is a snapshot; edits to the note while presenting are not reflected. Re-open to refresh.
+- The presentation is a snapshot; edits are not reflected live while you type. Press `r` (or run "Refresh presentation") to re-render in place, and by default the presentation refreshes itself when its tab regains focus after the note changed (configurable). Interactive state like callout folds resets on refresh.
 - Some themes misbehave at large font scales. Use the "Extra container classes" setting plus a CSS snippet to fine-tune, e.g.:
 
   ```css

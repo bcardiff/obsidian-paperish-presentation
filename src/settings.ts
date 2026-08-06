@@ -26,6 +26,7 @@ export interface PaperishPresentationSettings {
 	advanceOnClick: boolean;
 	progressIndicator: ProgressIndicator;
 	escBehavior: EscBehavior;
+	refreshOnFocus: boolean;
 	extraClasses: string;
 }
 
@@ -44,6 +45,7 @@ export const DEFAULT_SETTINGS: PaperishPresentationSettings = {
 	advanceOnClick: true,
 	progressIndicator: 'bar',
 	escBehavior: 'source',
+	refreshOnFocus: true,
 	extraClasses: '',
 };
 
@@ -201,6 +203,16 @@ export class PaperishPresentationSettingTab extends PluginSettingTab {
 					await update(false);
 				}),
 		);
+
+		new Setting(containerEl)
+			.setName('Refresh when the presentation regains focus')
+			.setDesc('Re-render if the note changed while you were away. Manual refresh is always available via the r key or the command palette.')
+			.addToggle((t) =>
+				t.setValue(s.refreshOnFocus).onChange(async (v) => {
+					s.refreshOnFocus = v;
+					await update(false);
+				}),
+			);
 
 		new Setting(containerEl)
 			.setName('Extra container classes')

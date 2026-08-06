@@ -1,6 +1,16 @@
 import { describe, it, expect } from 'vitest';
 import { partition, PartitionOptions, Slide } from '../src/partition';
-import { first, last, next, prev, anchorOf, positionForAnchor, applyPosition } from '../src/reveal';
+import {
+	first,
+	last,
+	next,
+	prev,
+	anchorOf,
+	positionForAnchor,
+	applyPosition,
+	slideSignature,
+	findSlideBySignature,
+} from '../src/reveal';
 
 function slidesFrom(html: string, opts?: Partial<PartitionOptions>): { c: HTMLElement; slides: Slide[] } {
 	const c = document.createElement('div');
@@ -89,6 +99,48 @@ describe('reveal: identity-anchored position (§2)', () => {
 		const gone = document.createElement('p');
 		expect(positionForAnchor(slides, gone, { slide: 9, step: 9 })).toEqual({ slide: 0, step: 0 });
 		expect(positionForAnchor([], null, { slide: 9, step: 9 })).toEqual({ slide: 0, step: -1 });
+	});
+});
+
+describe('reveal: cross-render signatures (§10.8 refresh)', () => {
+	const DOC = '<h1>T</h1><p>intro</p><h2>A</h2><p>a</p><h2>B</h2><p>b</p>';
+	// slides: [T], [intro], [A, a], [B, b]
+
+	it('round-trips a heading slide across an identical re-render', () => {
+		const { slides } = slidesFrom(DOC);
+		const sig = slideSignature(slides, 3);
+		const { slides: slides2 } = slidesFrom(DOC); // fresh nodes, same structure
+		expect(findSlideBySignature(slides2, sig)).toBe(3);
+	});
+
+	it('follows the heading when slides shift around it', () => {
+		const { slides } = slidesFrom(DOC);
+		const sig = slideSignature(slides, 3); // slide "B"
+		const { slides: slides2 } = slidesFrom('<h1>T</h1><p>intro</p><h2>NEW</h2><p>n</p><h2>A</h2><p>a</p><h2>B</h2><p>b</p>');
+		expect(slides2[findSlideBySignature(slides2, sig)]?.ownHeading?.textContent).toBe('B');
+	});
+
+	it('matches by occurrence when heading text repeats', () => {
+		const dup = '<h2>X</h2><p>1</p><h2>X</h2><p>2</p>';
+		const { slides } = slidesFrom(dup);
+		const sig = slideSignature(slides, 1); // second "X"
+		const { slides: slides2 } = slidesFrom(dup);
+		expect(findSlideBySignature(slides2, sig)).toBe(1);
+	});
+
+	it('restores heading-less slides via nearest preceding heading + offset', () => {
+		const { slides } = slidesFrom(DOC);
+		const sig = slideSignature(slides, 1); // intro slide after the H1
+		const { slides: slides2 } = slidesFrom(DOC);
+		expect(findSlideBySignature(slides2, sig)).toBe(1);
+	});
+
+	it('falls back to a clamped index when the heading is gone', () => {
+		const { slides } = slidesFrom(DOC);
+		const sig = slideSignature(slides, 3);
+		const { slides: slides2 } = slidesFrom('<h2>Other</h2><p>o</p><h2>More</h2><p>m</p>');
+		expect(findSlideBySignature(slides2, sig)).toBe(1); // clamp of fallbackIndex 3 to last slide
+		expect(findSlideBySignature([], sig)).toBe(0);
 	});
 });
 

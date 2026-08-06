@@ -21,6 +21,17 @@ export default class PaperishPresentationPlugin extends Plugin {
 			},
 		});
 
+		this.addCommand({
+			id: 'refresh-presentation',
+			name: 'Refresh presentation',
+			checkCallback: (checking) => {
+				const view = this.app.workspace.getActiveViewOfType(PaperishPresentationView);
+				if (!view) return false;
+				if (!checking) void view.refresh();
+				return true;
+			},
+		});
+
 		this.addSettingTab(new PaperishPresentationSettingTab(this.app, this));
 	}
 

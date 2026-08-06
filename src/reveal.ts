@@ -61,6 +61,59 @@ export function positionForAnchor(
 	return { slide, step: clampStep(slides[slide], fallback.step) };
 }
 
+/**
+ * Cross-render position mapping (§10.8): a re-render produces all-new DOM
+ * nodes, so identity anchoring (positionForAnchor) cannot survive a refresh.
+ * A signature describes a slide by its nearest preceding ownHeading
+ * (text + level + occurrence) plus a slide offset, with an index fallback.
+ */
+export interface SlideSignature {
+	headingText: string | null;
+	headingLevel: number;
+	occurrence: number; // among heading slides with the same text + level
+	offset: number; // slides between the heading slide and the target slide
+	fallbackIndex: number;
+}
+
+function headingKey(h: HTMLElement): string {
+	return h.getAttribute('data-heading') ?? h.textContent?.trim() ?? '';
+}
+
+function headingLevelOf(h: HTMLElement): number {
+	return Number(h.tagName.slice(1)) || 0;
+}
+
+export function slideSignature(slides: Slide[], index: number): SlideSignature {
+	let hIdx = Math.min(index, slides.length - 1);
+	while (hIdx >= 0 && !slides[hIdx]?.ownHeading) hIdx--;
+	const h = hIdx >= 0 ? slides[hIdx]!.ownHeading! : null;
+	if (!h) return { headingText: null, headingLevel: 0, occurrence: 0, offset: index, fallbackIndex: index };
+	const text = headingKey(h);
+	const level = headingLevelOf(h);
+	let occurrence = 0;
+	for (let i = 0; i < hIdx; i++) {
+		const oh = slides[i]?.ownHeading;
+		if (oh && headingKey(oh) === text && headingLevelOf(oh) === level) occurrence++;
+	}
+	return { headingText: text, headingLevel: level, occurrence, offset: index - hIdx, fallbackIndex: index };
+}
+
+export function findSlideBySignature(slides: Slide[], sig: SlideSignature): number {
+	if (slides.length === 0) return 0;
+	const clamp = (i: number) => Math.max(0, Math.min(i, slides.length - 1));
+	if (sig.headingText !== null) {
+		let seen = 0;
+		for (let i = 0; i < slides.length; i++) {
+			const oh = slides[i]?.ownHeading;
+			if (oh && headingKey(oh) === sig.headingText && headingLevelOf(oh) === sig.headingLevel) {
+				if (seen === sig.occurrence) return clamp(i + sig.offset);
+				seen++;
+			}
+		}
+	}
+	return clamp(sig.fallbackIndex);
+}
+
 export function applyPosition(slides: Slide[], pos: DeckPosition): void {
 	for (const s of slides) {
 		const off = s.index !== pos.slide;
