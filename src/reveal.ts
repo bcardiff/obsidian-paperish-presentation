@@ -10,8 +10,18 @@ function clampStep(slide: Slide | undefined, step: number): number {
 	return Math.max(-1, Math.min(step, max));
 }
 
-export function first(): DeckPosition {
-	return { slide: 0, step: -1 };
+/**
+ * Step to use when entering a slide going forward. Heading-less slides
+ * (content after an H1 title slide, hr slides, intro slides) enter with their
+ * first fragment revealed — at step -1 nothing on them would be visible (§5).
+ */
+export function entryStep(slide: Slide | undefined): number {
+	if (!slide || slide.ownHeading !== null || slide.fragments.length === 0) return -1;
+	return 0;
+}
+
+export function first(slides: Slide[]): DeckPosition {
+	return { slide: 0, step: entryStep(slides[0]) };
 }
 
 export function last(slides: Slide[]): DeckPosition {
@@ -22,7 +32,7 @@ export function last(slides: Slide[]): DeckPosition {
 export function next(slides: Slide[], pos: DeckPosition): DeckPosition {
 	const s = slides[pos.slide];
 	if (s && pos.step < s.fragments.length - 1) return { slide: pos.slide, step: pos.step + 1 };
-	if (pos.slide < slides.length - 1) return { slide: pos.slide + 1, step: -1 };
+	if (pos.slide < slides.length - 1) return { slide: pos.slide + 1, step: entryStep(slides[pos.slide + 1]) };
 	return pos;
 }
 

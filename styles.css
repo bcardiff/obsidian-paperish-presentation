@@ -41,6 +41,11 @@
 	padding: 6vh 2rem;
 	font-size: calc(1rem * var(--pp-font-scale));
 	line-height: 1.45;
+	/* Neutralize app rules on .markdown-preview-view (height: 100%; overflow auto):
+	   .pp-content must be the only scroll container, or scrollTo() is a no-op. */
+	height: auto;
+	min-height: 0;
+	overflow: visible;
 }
 
 /* Scroll model (§12.2): center mode pads the column so first/last slides can

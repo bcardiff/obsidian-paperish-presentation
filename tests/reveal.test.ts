@@ -13,7 +13,7 @@ const DECK = '<h2>A</h2><p>a1</p><p>a2</p><h2>B</h2><p>b1</p>';
 describe('reveal: navigation math', () => {
 	it('next steps through fragments, then advances slide at step -1', () => {
 		const { slides } = slidesFrom(DECK);
-		let pos = first();
+		let pos = first(slides);
 		expect(pos).toEqual({ slide: 0, step: -1 });
 		pos = next(slides, pos);
 		expect(pos).toEqual({ slide: 0, step: 0 });
@@ -44,8 +44,27 @@ describe('reveal: navigation math', () => {
 
 	it('with reveal mode none, next/prev move whole slides', () => {
 		const { slides } = slidesFrom(DECK, { revealMode: 'none' });
-		expect(next(slides, first())).toEqual({ slide: 1, step: -1 });
+		expect(next(slides, first(slides))).toEqual({ slide: 1, step: -1 });
 		expect(prev(slides, { slide: 1, step: -1 })).toEqual({ slide: 0, step: -1 });
+	});
+
+	it('heading-less slides are entered with their first fragment revealed', () => {
+		// H1 title slide, then the heading-less content slide it produces
+		const { slides } = slidesFrom('<h1>T</h1><p>a</p><p>b</p>');
+		expect(slides[1].ownHeading).toBeNull();
+		expect(next(slides, { slide: 0, step: -1 })).toEqual({ slide: 1, step: 0 });
+	});
+
+	it('first() starts a heading-less intro slide at step 0', () => {
+		const { slides } = slidesFrom('<p>intro</p><h2>A</h2><p>a</p>');
+		expect(first(slides)).toEqual({ slide: 0, step: 0 });
+	});
+
+	it('first() keeps step -1 for heading slides, empty decks, and none mode', () => {
+		expect(first(slidesFrom(DECK).slides)).toEqual({ slide: 0, step: -1 });
+		expect(first([])).toEqual({ slide: 0, step: -1 });
+		const none = slidesFrom('<p>intro</p><h2>A</h2>', { revealMode: 'none' }).slides;
+		expect(first(none)).toEqual({ slide: 0, step: -1 });
 	});
 });
 

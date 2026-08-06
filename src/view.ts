@@ -1,7 +1,7 @@
 import { Component, ItemView, MarkdownRenderer, Scope, TFile, ViewStateResult, WorkspaceLeaf } from 'obsidian';
 import type PaperishPresentationPlugin from './main';
 import { partition, PartitionOptions, Slide } from './partition';
-import { anchorOf, applyPosition, DeckPosition, first, last, next, positionForAnchor, prev } from './reveal';
+import { anchorOf, applyPosition, DeckPosition, entryStep, first, last, next, positionForAnchor, prev } from './reveal';
 import { buildTrailContent, trailsEqual } from './contextbar';
 
 export const VIEW_TYPE_PAPERISH_PRESENTATION = 'paperish-presentation-view';
@@ -10,7 +10,7 @@ export class PaperishPresentationView extends ItemView {
 	private plugin: PaperishPresentationPlugin;
 	private filePath: string | null = null;
 	private slides: Slide[] = [];
-	private pos: DeckPosition = first();
+	private pos: DeckPosition = { slide: 0, step: -1 };
 	private barEl!: HTMLElement;
 	private contentContainer!: HTMLElement;
 	private renderContainer!: HTMLElement;
@@ -36,7 +36,7 @@ export class PaperishPresentationView extends ItemView {
 		}
 		this.scope.register(['Shift'], ' ', () => this.back());
 		this.scope.register([], 'Home', () => {
-			this.setPos(first());
+			this.setPos(first(this.slides));
 			return false;
 		});
 		this.scope.register([], 'End', () => {
@@ -95,8 +95,9 @@ export class PaperishPresentationView extends ItemView {
 			if (slideEl) {
 				const idx = Number(slideEl.getAttribute('data-pp-slide'));
 				if (Number.isFinite(idx) && idx !== this.pos.slide) {
-					const fragments = this.slides[idx]?.fragments.length ?? 0;
-					this.setPos({ slide: idx, step: idx < this.pos.slide ? fragments - 1 : -1 });
+					const s = this.slides[idx];
+					const step = idx < this.pos.slide ? (s?.fragments.length ?? 0) - 1 : entryStep(s);
+					this.setPos({ slide: idx, step });
 					return;
 				}
 			}
@@ -191,7 +192,7 @@ export class PaperishPresentationView extends ItemView {
 			if (seq !== this.renderSeq) return;
 
 			this.repartition();
-			this.pos = first();
+			this.pos = first(this.slides);
 			applyPosition(this.slides, this.pos);
 			this.updateContextBar();
 			this.updateProgress();
