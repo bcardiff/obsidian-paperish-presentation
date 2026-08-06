@@ -13,28 +13,48 @@ describe('partition: slide boundaries', () => {
 	it('splits at headings up to breakLevel; deeper headings do not split', () => {
 		const c = containerFrom('<h1>A</h1><p>a</p><h2>B</h2><p>b</p><h3>C</h3><p>c</p>');
 		const slides = partition(c, OPTS);
+		expect(slides.length).toBe(3);
+		expect(slides[0].elements.map((e) => e.tagName)).toEqual(['H1']);
+		expect(slides[1].elements.map((e) => e.tagName)).toEqual(['P']);
+		expect(slides[2].elements.map((e) => e.tagName)).toEqual(['H2', 'P', 'H3', 'P']);
+	});
+
+	it('H1 slides are title-only: following content opens a new slide with the h1 as trail', () => {
+		const c = containerFrom('<h1>A</h1><p>a</p><p>b</p>');
+		const slides = partition(c, OPTS);
 		expect(slides.length).toBe(2);
-		expect(slides[0].elements.map((e) => e.tagName)).toEqual(['H1', 'P']);
-		expect(slides[1].elements.map((e) => e.tagName)).toEqual(['H2', 'P', 'H3', 'P']);
+		expect(slides[0].elements.map((e) => e.tagName)).toEqual(['H1']);
+		expect(slides[0].ownHeading?.textContent).toBe('A');
+		expect(slides[1].ownHeading).toBeNull();
+		expect(slides[1].elements.map((e) => e.textContent)).toEqual(['a', 'b']);
+		expect(slides[1].trail.map((h) => h.textContent)).toEqual(['A']);
+	});
+
+	it('H1 title-only rule applies at every break level', () => {
+		const c = containerFrom('<h1>A</h1><p>a</p>');
+		const slides = partition(c, { ...OPTS, breakLevel: 1 });
+		expect(slides.length).toBe(2);
+		expect(slides[0].elements.map((e) => e.tagName)).toEqual(['H1']);
+		expect(slides[1].elements.map((e) => e.textContent)).toEqual(['a']);
 	});
 
 	it('emits no intro slide when the document opens with a break heading', () => {
 		const c = containerFrom('<h1>A</h1><p>a</p>');
 		const slides = partition(c, OPTS);
-		expect(slides.length).toBe(1);
+		expect(slides.length).toBe(2);
 		expect(slides[0].ownHeading?.tagName).toBe('H1');
 	});
 
 	it('emits an intro slide when content precedes the first break', () => {
 		const c = containerFrom('<p>intro</p><h1>A</h1><p>a</p>');
 		const slides = partition(c, OPTS);
-		expect(slides.length).toBe(2);
+		expect(slides.length).toBe(3); // intro, title-only A, content
 		expect(slides[0].ownHeading).toBeNull();
 		expect(slides[0].elements.map((e) => e.textContent)).toEqual(['intro']);
 	});
 
 	it('splits at hr when hrBreaks is on; the hr belongs to no slide and is tagged', () => {
-		const c = containerFrom('<h1>A</h1><p>a</p><hr><p>b</p>');
+		const c = containerFrom('<h2>A</h2><p>a</p><hr><p>b</p>');
 		const slides = partition(c, OPTS);
 		expect(slides.length).toBe(2);
 		expect(slides[1].ownHeading).toBeNull();
@@ -45,10 +65,10 @@ describe('partition: slide boundaries', () => {
 	});
 
 	it('does not split at hr when hrBreaks is off (hr stays in the slide)', () => {
-		const c = containerFrom('<h1>A</h1><p>a</p><hr><p>b</p>');
+		const c = containerFrom('<h2>A</h2><p>a</p><hr><p>b</p>');
 		const slides = partition(c, { ...OPTS, hrBreaks: false });
 		expect(slides.length).toBe(1);
-		expect(slides[0].elements.map((e) => e.tagName)).toEqual(['H1', 'P', 'HR', 'P']);
+		expect(slides[0].elements.map((e) => e.tagName)).toEqual(['H2', 'P', 'HR', 'P']);
 	});
 
 	it('does not emit an empty slide for hr immediately followed by a heading', () => {
@@ -68,8 +88,10 @@ describe('partition: slide boundaries', () => {
 	it('tags every slide element with data-pp-slide', () => {
 		const c = containerFrom('<h1>A</h1><p>a</p><h1>B</h1><p>b</p>');
 		partition(c, OPTS);
-		expect(c.querySelector('p')?.getAttribute('data-pp-slide')).toBe('0');
-		expect(c.querySelectorAll('[data-pp-slide="1"]').length).toBe(2);
+		// H1 title-only rule: [A], [a], [B], [b]
+		expect(c.querySelector('p')?.getAttribute('data-pp-slide')).toBe('1');
+		expect(c.querySelectorAll('[data-pp-slide="2"]').length).toBe(1);
+		expect(c.querySelectorAll('[data-pp-slide="3"]').length).toBe(1);
 	});
 });
 

@@ -94,6 +94,9 @@ export function partition(container: HTMLElement, options: PartitionOptions): Sl
 			}
 		}
 		current.elements.push(child);
+		// H1 slides are title-only: following content lazily opens a new slide,
+		// like the post-HR rule (§4).
+		if (level === 1 && child === current.ownHeading) current = null;
 	}
 
 	for (const slide of slides) {
