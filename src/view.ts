@@ -43,6 +43,7 @@ export class PaperPresentView extends ItemView {
 			return false;
 		});
 		this.scope.register([], 'Escape', () => this.handleEscape());
+		this.scope.register([], 'f', () => this.toggleFullscreen());
 	}
 
 	getViewType(): string {
@@ -89,6 +90,13 @@ export class PaperPresentView extends ItemView {
 			const target = evt.target as HTMLElement;
 			if (target.closest('a, button, input, textarea, video, audio, iframe, summary')) return;
 			this.advance();
+		});
+		const fsBtn = this.contentEl.createEl('button', { cls: 'pp-fullscreen-btn', attr: { 'aria-label': 'Toggle fullscreen' } });
+		fsBtn.setText('⛶');
+		if (!this.containerEl.requestFullscreen) fsBtn.hide();
+		this.registerDomEvent(fsBtn, 'click', (evt) => {
+			evt.stopPropagation();
+			this.toggleFullscreen();
 		});
 	}
 
@@ -170,6 +178,7 @@ export class PaperPresentView extends ItemView {
 		this.pos = first();
 		applyPosition(this.slides, this.pos);
 		this.updateContextBar();
+		this.updateProgress();
 		this.startObserver();
 		this.contentEl.removeClass('pp-loading');
 	}
@@ -227,15 +236,41 @@ export class PaperPresentView extends ItemView {
 		this.pos = positionForAnchor(this.slides, anchor, this.pos);
 		applyPosition(this.slides, this.pos);
 		this.updateContextBar();
+		this.updateProgress();
 	}
 
 	private setPos(pos: DeckPosition): void {
 		const slideChanged = pos.slide !== this.pos.slide;
 		this.pos = pos;
 		applyPosition(this.slides, pos);
+		this.updateProgress();
 		if (slideChanged) {
 			this.contentContainer.scrollTop = 0;
 			this.updateContextBar();
+		}
+	}
+
+	private toggleFullscreen(): false {
+		if (!this.containerEl.requestFullscreen) return false; // unsupported (mobile) — no-op (§7)
+		if (document.fullscreenElement) {
+			void document.exitFullscreen();
+		} else {
+			void this.containerEl.requestFullscreen();
+		}
+		return false;
+	}
+
+	private updateProgress(): void {
+		const mode = this.plugin.settings.progressIndicator;
+		this.progressEl.setAttribute('data-mode', mode);
+		if (mode === 'bar') {
+			const pct = this.slides.length > 0 ? ((this.pos.slide + 1) / this.slides.length) * 100 : 0;
+			this.progressEl.style.setProperty('--pp-progress', `${pct}%`);
+			this.progressEl.setText('');
+		} else if (mode === 'counter') {
+			this.progressEl.setText(`${this.pos.slide + 1} / ${this.slides.length}`);
+		} else {
+			this.progressEl.setText('');
 		}
 	}
 
