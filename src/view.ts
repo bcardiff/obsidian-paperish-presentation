@@ -15,6 +15,7 @@ export class PaperPresentView extends ItemView {
 	private renderContainer!: HTMLElement;
 	private progressEl!: HTMLElement;
 	private renderComponent: Component | null = null;
+	private renderSeq = 0;
 
 	constructor(leaf: WorkspaceLeaf, plugin: PaperPresentPlugin) {
 		super(leaf);
@@ -64,7 +65,7 @@ export class PaperPresentView extends ItemView {
 	}
 
 	async onClose(): Promise<void> {
-		this.renderComponent?.unload();
+		if (this.renderComponent) this.removeChild(this.renderComponent);
 		this.renderComponent = null;
 	}
 
@@ -87,17 +88,21 @@ export class PaperPresentView extends ItemView {
 		const file = this.filePath ? this.app.vault.getFileByPath(this.filePath) : null;
 		if (!(file instanceof TFile)) return;
 
+		const seq = ++this.renderSeq;
+
 		this.contentEl.addClass('pp-loading');
-		this.renderComponent?.unload();
+		if (this.renderComponent) this.removeChild(this.renderComponent);
 		this.renderComponent = new Component();
 		this.addChild(this.renderComponent);
 		this.renderContainer.empty();
 
 		let markdown = await this.app.vault.cachedRead(file);
+		if (seq !== this.renderSeq) return;
 		const fmPos = this.app.metadataCache.getFileCache(file)?.frontmatterPosition;
 		if (fmPos) markdown = markdown.slice(fmPos.end.offset).replace(/^\s+/, '');
 
 		await MarkdownRenderer.render(this.app, markdown, this.renderContainer, file.path, this.renderComponent);
+		if (seq !== this.renderSeq) return;
 
 		this.repartition();
 		this.pos = first();
@@ -113,7 +118,7 @@ export class PaperPresentView extends ItemView {
 		const s = this.plugin.settings;
 		const file = this.filePath ? this.app.vault.getFileByPath(this.filePath) : null;
 		const fm = file ? this.app.metadataCache.getFileCache(file)?.frontmatter : undefined;
-		const raw = typeof fm?.['slides-break'] === 'string' ? (fm['slides-break'] as string).toLowerCase() : null;
+		const raw = typeof fm?.['slides-break'] === 'string' ? fm['slides-break'].toLowerCase() : null;
 		const breakLevel = raw === 'h1' ? 1 : raw === 'h2' ? 2 : raw === 'h3' ? 3 : s.breakLevel;
 		return { breakLevel, hrBreaks: s.hrBreaks, revealMode: s.revealMode };
 	}

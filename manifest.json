@@ -2,7 +2,7 @@
 	"id": "paper-present",
 	"name": "Paper Present",
 	"version": "0.1.0",
-	"minAppVersion": "1.1.0",
+	"minAppVersion": "1.7.2",
 	"description": "Present the current note as minimal, typography-driven slides split at headings, preserving all rendered content.",
 	"author": "Brian J. Cardiff",
 	"authorUrl": "https://github.com/bcardiff",
