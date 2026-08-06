@@ -1,8 +1,115 @@
-/*
+/* Paper Present — all rules namespaced under .paper-present (§9) */
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
+.paper-present {
+	--pp-font-scale: 1.4;
+	--pp-max-width: 42rem;
+	--pp-media-max-h: 70vh;
+	display: grid;
+	grid-template-rows: auto 1fr;
+	height: 100%;
+	position: relative;
+	overflow: hidden;
+	padding: 0;
+}
 
-If your plugin does not need CSS, delete this file.
+.paper-present.pp-bar-bottom {
+	grid-template-rows: 1fr auto;
+}
+.paper-present.pp-bar-bottom .pp-context-bar {
+	order: 2;
+}
+.paper-present.pp-bar-off {
+	grid-template-rows: 1fr;
+}
+.paper-present.pp-bar-off .pp-context-bar {
+	display: none;
+}
 
-*/
+.paper-present.pp-loading .pp-content {
+	visibility: hidden;
+}
+
+.paper-present .pp-content {
+	overflow-y: auto;
+	position: relative;
+}
+
+.paper-present .pp-doc {
+	position: relative;
+	max-width: var(--pp-max-width);
+	margin: 0 auto;
+	padding: 6vh 2rem;
+	font-size: calc(1rem * var(--pp-font-scale));
+	line-height: 1.5;
+}
+
+.paper-present[data-pp-valign='center'] .pp-content {
+	display: flex;
+	flex-direction: column;
+}
+.paper-present[data-pp-valign='center'] .pp-doc {
+	margin: auto;
+	width: 100%;
+}
+
+/* Off-slide: hidden but measurable — NEVER display:none (§2). */
+.paper-present .pp-doc .pp-offslide {
+	visibility: hidden;
+	position: absolute;
+	top: 0;
+	width: 100%;
+}
+
+/* Presentation hide-list (§9) — keep in one place, it will grow. */
+.paper-present .pp-doc hr,
+.paper-present .pp-doc [data-pp-hr],
+.paper-present .pp-doc .heading-collapse-indicator,
+.paper-present .pp-doc .collapse-indicator,
+.paper-present .pp-doc .edit-block-button {
+	display: none;
+}
+
+/* Fragment reveal (§5) */
+.paper-present .pp-doc [data-pp-frag] {
+	transition: opacity 200ms ease-out, transform 200ms ease-out;
+}
+.paper-present[data-pp-unrevealed='dimmed'] .pp-doc [data-pp-frag]:not(.pp-revealed):not(.pp-offslide) {
+	opacity: 0.25;
+}
+.paper-present[data-pp-unrevealed='hidden'] .pp-doc [data-pp-frag]:not(.pp-revealed):not(.pp-offslide) {
+	opacity: 0;
+	visibility: hidden;
+	transform: translateY(8px);
+}
+@media (prefers-reduced-motion: reduce) {
+	.paper-present .pp-doc [data-pp-frag] {
+		transition: none;
+		transform: none !important;
+	}
+}
+
+/* Context bar (§6) */
+.paper-present .pp-context-bar {
+	padding: 0.5rem 1.5rem;
+	min-height: 2.2rem;
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	font-size: 0.85rem;
+	color: var(--text-muted);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	transition: opacity 120ms ease;
+}
+.paper-present .pp-context-bar.pp-bar-fading {
+	opacity: 0;
+}
+.paper-present .pp-trail-sep {
+	color: var(--text-faint);
+}
+
+/* Progress indicator (§7) */
+.paper-present .pp-progress {
+	display: none;
+}
