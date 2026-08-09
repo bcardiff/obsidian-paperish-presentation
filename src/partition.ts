@@ -37,7 +37,7 @@ function computeFragments(slide: Slide, mode: PartitionOptions['revealMode']): H
 		if (el === slide.ownHeading || el.tagName === 'HR') continue;
 		if (mode === 'list-items' && (el.tagName === 'UL' || el.tagName === 'OL')) {
 			for (const li of Array.from(el.children)) {
-				if (li instanceof HTMLElement && li.tagName === 'LI') fragments.push(li);
+				if (li.instanceOf(HTMLElement) && li.tagName === 'LI') fragments.push(li);
 			}
 		} else {
 			fragments.push(el);
@@ -70,10 +70,7 @@ export function partition(container: HTMLElement, options: PartitionOptions): Sl
 	};
 
 	for (const child of Array.from(container.children)) {
-		// Native `instanceof` (not .instanceOf()): this module is unit-tested under jsdom,
-		// which lacks Obsidian's runtime .instanceOf() polyfill — see the eslint.config.mts
-		// override for src/partition.ts.
-		if (!(child instanceof HTMLElement)) continue;
+		if (!child.instanceOf(HTMLElement)) continue;
 
 		if (child.tagName === 'HR' && options.hrBreaks) {
 			child.setAttribute('data-pp-hr', '');
