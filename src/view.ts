@@ -108,6 +108,10 @@ export class PaperishPresentationView extends ItemView {
 			if (!this.plugin.settings.advanceOnClick) return;
 			if (window.getSelection()?.toString()) return; // don't fight text selection (§7)
 			const target = evt.target as HTMLElement;
+			// A detached target means an interactive element already handled this click
+			// and mutated the DOM mid-propagation (e.g. the code-block copy button swaps
+			// its icon), leaving closest() blind to its ancestry — never a navigation click.
+			if (!target.isConnected) return;
 			if (target.closest('a, button, input, textarea, video, audio, iframe, summary')) return;
 			// Expanding/collapsing a callout is not a navigation gesture (§7).
 			if (target.closest('.callout.is-collapsible .callout-title')) return;
