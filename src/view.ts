@@ -329,31 +329,55 @@ export class PaperishPresentationView extends ItemView {
 
 	private setPos(pos: DeckPosition): void {
 		const slideChanged = pos.slide !== this.pos.slide;
+		const stepChanged = pos.step !== this.pos.step;
 		this.pos = pos;
 		applyPosition(this.slides, pos);
 		this.updateProgress();
-		if (slideChanged) {
-			this.scrollToCurrent(true);
-			this.updateContextBar();
-		}
+		if (slideChanged || stepChanged) this.scrollToCurrent(true);
+		if (slideChanged) this.updateContextBar();
 	}
 
-	/** Scroll the current slide to the viewport position given by verticalAlign (§12.2). */
+	/** Offset of el relative to renderContainer, across nested offset contexts
+	 *  (list-items fragments live inside their list, not at the top level). */
+	private offsetWithinDoc(el: HTMLElement): number {
+		let y = 0;
+		let n: HTMLElement | null = el;
+		while (n && n !== this.renderContainer) {
+			y += n.offsetTop;
+			const parent: Element | null = n.offsetParent;
+			n = parent && parent.instanceOf(HTMLElement) ? parent : null;
+		}
+		return y;
+	}
+
+	/** Scroll the current slide to the viewport position given by verticalAlign (§12.2).
+	 *  Slides taller than the viewport follow the current fragment instead, so
+	 *  stepping scrolls earlier content up and centers the newly revealed element. */
 	private scrollToCurrent(smooth: boolean): void {
-		const els = this.slides[this.pos.slide]?.elements;
-		if (!els || els.length === 0) return;
+		const slide = this.slides[this.pos.slide];
+		const els = slide?.elements;
+		if (!slide || !els || els.length === 0) return;
 		const firstEl = els[0]!;
 		const lastEl = els[els.length - 1]!;
 		const docTop = this.renderContainer.offsetTop;
 		const top = docTop + firstEl.offsetTop;
 		const bottom = docTop + lastEl.offsetTop + lastEl.offsetHeight;
 		const viewport = this.contentContainer.clientHeight;
+		const topAligned = top - Math.min(48, viewport * 0.06);
+		const frag = slide.fragments[this.pos.step];
 		let target: number;
-		if (this.plugin.settings.verticalAlign === 'center' && bottom - top <= viewport) {
-			target = (top + bottom) / 2 - viewport / 2;
+		if (bottom - top <= viewport) {
+			target = this.plugin.settings.verticalAlign === 'center' ? (top + bottom) / 2 - viewport / 2 : topAligned;
+		} else if (frag) {
+			// Center the current fragment, clamped so entering the slide never
+			// starts below its top; huge fragments align to their own top.
+			const fragTop = docTop + this.offsetWithinDoc(frag);
+			target =
+				frag.offsetHeight >= viewport
+					? fragTop - Math.min(48, viewport * 0.06)
+					: Math.max(topAligned, fragTop + frag.offsetHeight / 2 - viewport / 2);
 		} else {
-			// top alignment, and the fallback for slides taller than the viewport
-			target = top - Math.min(48, viewport * 0.06);
+			target = topAligned;
 		}
 		const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 		this.contentContainer.scrollTo({
