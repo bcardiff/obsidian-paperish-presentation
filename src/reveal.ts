@@ -118,6 +118,10 @@ export function applyPosition(slides: Slide[], pos: DeckPosition): void {
 	for (const s of slides) {
 		const off = s.index !== pos.slide;
 		for (const el of s.elements) el.classList.toggle('pp-offslide', off);
-		s.fragments.forEach((f, k) => f.classList.toggle('pp-revealed', !off && k <= pos.step));
+		// Reveal state is deck-global, not slide-local: past slides stay fully
+		// revealed and future slides stay unrevealed, so the 'hidden' unrevealed
+		// style can keep upcoming fragments invisible while they are off-slide (§5).
+		const revealedTo = s.index < pos.slide ? Infinity : s.index > pos.slide ? -1 : pos.step;
+		s.fragments.forEach((f, k) => f.classList.toggle('pp-revealed', k <= revealedTo));
 	}
 }

@@ -77,13 +77,16 @@
 .paperish-presentation .pp-doc [data-pp-frag] {
 	transition: opacity 200ms ease-out, transform 200ms ease-out;
 }
-/* Un-revealed styling applies only within the current slide — off-slide
+/* Un-revealed dimming applies only within the current slide — off-slide
    neighbors keep their uniform dim (the :not(.pp-offslide *) guard covers
    list-items fragments inside a dimmed top-level list). */
 .paperish-presentation[data-pp-unrevealed='dimmed'] .pp-doc [data-pp-frag]:not(.pp-revealed):not(.pp-offslide):not(.pp-offslide *) {
 	opacity: 0.25;
 }
-.paperish-presentation[data-pp-unrevealed='hidden'] .pp-doc [data-pp-frag]:not(.pp-revealed):not(.pp-offslide):not(.pp-offslide *) {
+/* 'hidden' has no off-slide guard: un-revealed fragments stay invisible even on
+   neighbor slides, until stepped onto. Reveal state is deck-global (reveal.ts),
+   so already-shown content on past slides stays visible. */
+.paperish-presentation[data-pp-unrevealed='hidden'] .pp-doc [data-pp-frag]:not(.pp-revealed) {
 	opacity: 0;
 	visibility: hidden;
 	transform: translateY(var(--pp-frag-rise));

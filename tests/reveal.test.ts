@@ -155,4 +155,15 @@ describe('reveal: applyPosition', () => {
 		expect(slides[0].elements.every((e) => e.classList.contains('pp-offslide'))).toBe(true);
 		expect(slides[1].elements.every((e) => !e.classList.contains('pp-offslide'))).toBe(true);
 	});
+
+	it('reveal state is deck-global: past slides fully revealed, future slides not', () => {
+		const { slides } = slidesFrom(DECK);
+		applyPosition(slides, { slide: 0, step: 0 });
+		// Future slide's fragments stay unrevealed (hidden style keeps them invisible off-slide).
+		expect(slides[1].fragments.every((f) => !f.classList.contains('pp-revealed'))).toBe(true);
+		applyPosition(slides, { slide: 1, step: -1 });
+		// Past slide's fragments stay revealed — going forward must not blank out prior content.
+		expect(slides[0].fragments.every((f) => f.classList.contains('pp-revealed'))).toBe(true);
+		expect(slides[1].fragments.every((f) => !f.classList.contains('pp-revealed'))).toBe(true);
+	});
 });
