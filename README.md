@@ -15,6 +15,16 @@ Run **Paperish Presentation: Present current note** from the command palette. Th
 
 Within a slide, blocks reveal step by step (configurable: whole slides, blocks, or list items). A context bar shows the ancestor headings of the current slide.
 
+When a slide is taller than the viewport, its heading pins to the top while you step through it ("Sticky slide heading" setting, on by default). While pinned the heading has the `pp-stuck` class, so a CSS snippet can restyle it — prefer `transform` over `font-size`, which would reflow the deck mid-scroll:
+
+```css
+.paperish-presentation .pp-stuck {
+	transform: scale(0.7);
+	transform-origin: top left;
+	transition: transform 150ms ease;
+}
+```
+
 ## Per-note options
 
 Frontmatter `slides-break: h1 | h2 | h3` overrides the break level for that note.

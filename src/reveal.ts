@@ -123,6 +123,12 @@ export function applyPosition(slides: Slide[], pos: DeckPosition): void {
 			// slides wholesale — including their headings, which are not fragments.
 			el.classList.toggle('pp-upcoming', s.index > pos.slide);
 		}
+		// Only the current slide's own heading may stick (§9); the slides all share
+		// one containing block, so sticky on every heading would pile them up.
+		if (s.ownHeading) {
+			s.ownHeading.classList.toggle('pp-sticky-heading', !off);
+			if (off) s.ownHeading.classList.remove('pp-stuck');
+		}
 		// Reveal state is deck-global, not slide-local: past slides stay fully
 		// revealed and future slides stay unrevealed, so the 'hidden' unrevealed
 		// style can keep upcoming fragments invisible while they are off-slide (§5).

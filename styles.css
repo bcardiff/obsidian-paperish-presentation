@@ -182,6 +182,23 @@
 	font-size: 1.6em;
 }
 
+/* Sticky slide heading (§9): only the current slide's own heading carries
+   .pp-sticky-heading (reveal.ts) — all slides share one containing block, so
+   sticky on every heading would pile them up at the top. While actually pinned
+   the view adds .pp-stuck (CSS has no :stuck selector) as the styling hook. */
+.paperish-presentation.pp-sticky-headings .pp-doc .pp-sticky-heading {
+	position: sticky;
+	top: 0;
+	z-index: 5;
+	background-color: var(--background-primary);
+}
+.paperish-presentation.pp-sticky-headings.pp-force-dark .pp-doc .pp-sticky-heading {
+	background-color: #1e1e1e;
+}
+.paperish-presentation.pp-sticky-headings.pp-force-light .pp-doc .pp-sticky-heading {
+	background-color: #ffffff;
+}
+
 /* Full-bleed media (§9): centered, may exceed the column, capped height */
 .paperish-presentation.pp-full-bleed .pp-doc :is(img, video) {
 	display: block;

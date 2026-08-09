@@ -21,6 +21,7 @@ export interface PaperishPresentationSettings {
 	fontScale: number;
 	maxWidth: number;
 	verticalAlign: VerticalAlign;
+	stickyHeadings: boolean;
 	fullBleedMedia: boolean;
 	colorScheme: ColorScheme;
 	advanceOnClick: boolean;
@@ -40,6 +41,7 @@ export const DEFAULT_SETTINGS: PaperishPresentationSettings = {
 	fontScale: 1.4,
 	maxWidth: 42,
 	verticalAlign: 'center',
+	stickyHeadings: true,
 	fullBleedMedia: true,
 	colorScheme: 'vault',
 	advanceOnClick: true,
@@ -100,6 +102,11 @@ export class PaperishPresentationSettingTab extends PluginSettingTab {
 			{
 				name: 'Vertical alignment',
 				control: { type: 'dropdown', key: 'verticalAlign', options: { top: 'Top', center: 'Center' } },
+			},
+			{
+				name: 'Sticky slide heading',
+				desc: 'Pin the current slide heading to the top when it scrolls out of view. While pinned it has the pp-stuck class, for CSS snippets.',
+				control: { type: 'toggle', key: 'stickyHeadings' },
 			},
 			{
 				name: 'Full-bleed media',

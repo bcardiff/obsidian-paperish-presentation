@@ -167,6 +167,31 @@ describe('reveal: applyPosition', () => {
 		expect(slides[1].fragments.every((f) => !f.classList.contains('pp-revealed'))).toBe(true);
 	});
 
+	it('keeps .pp-sticky-heading on exactly the current slide own heading', () => {
+		const { slides } = slidesFrom(DECK);
+		applyPosition(slides, { slide: 0, step: 0 });
+		expect(slides[0].ownHeading?.classList.contains('pp-sticky-heading')).toBe(true);
+		expect(slides[1].ownHeading?.classList.contains('pp-sticky-heading')).toBe(false);
+		applyPosition(slides, { slide: 1, step: -1 });
+		expect(slides[0].ownHeading?.classList.contains('pp-sticky-heading')).toBe(false);
+		expect(slides[1].ownHeading?.classList.contains('pp-sticky-heading')).toBe(true);
+	});
+
+	it('clears the stuck styling hook when a heading stops being current', () => {
+		const { slides } = slidesFrom(DECK);
+		applyPosition(slides, { slide: 0, step: 0 });
+		slides[0].ownHeading?.classList.add('pp-stuck'); // as the view would while pinned
+		applyPosition(slides, { slide: 1, step: -1 });
+		expect(slides[0].ownHeading?.classList.contains('pp-stuck')).toBe(false);
+	});
+
+	it('sticky marking copes with heading-less slides', () => {
+		const { c, slides } = slidesFrom('<h2>A</h2><p>a1</p><hr><p>b1</p>');
+		applyPosition(slides, { slide: 1, step: 0 });
+		expect(slides[1].ownHeading).toBeNull();
+		expect(c.querySelectorAll('.pp-sticky-heading').length).toBe(0);
+	});
+
 	it('marks elements of slides after the current one with .pp-upcoming', () => {
 		const { slides } = slidesFrom(DECK);
 		applyPosition(slides, { slide: 0, step: 0 });

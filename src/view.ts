@@ -35,6 +35,7 @@ export class PaperishPresentationView extends ItemView {
 	private lastTrail: HTMLElement[] = [];
 	private appliedExtraClasses: string[] = [];
 	private sourceDirty = false;
+	private stuckRaf: number | null = null;
 
 	constructor(leaf: WorkspaceLeaf, plugin: PaperishPresentationPlugin) {
 		super(leaf);
@@ -123,6 +124,13 @@ export class PaperishPresentationView extends ItemView {
 			}
 			this.advance();
 		});
+		this.registerDomEvent(this.contentContainer, 'scroll', () => {
+			if (this.stuckRaf !== null) return;
+			this.stuckRaf = window.requestAnimationFrame(() => {
+				this.stuckRaf = null;
+				this.updateStuckHeading();
+			});
+		});
 		this.registerEvent(
 			this.app.vault.on('modify', (file) => {
 				if (file.path === this.filePath) this.sourceDirty = true;
@@ -150,6 +158,10 @@ export class PaperishPresentationView extends ItemView {
 			window.clearTimeout(this.barSwapTimer);
 			this.barSwapTimer = null;
 		}
+		if (this.stuckRaf !== null) {
+			window.cancelAnimationFrame(this.stuckRaf);
+			this.stuckRaf = null;
+		}
 		if (this.renderComponent) this.removeChild(this.renderComponent);
 		this.renderComponent = null;
 	}
@@ -163,6 +175,8 @@ export class PaperishPresentationView extends ItemView {
 		root.toggleClass('pp-bar-bottom', s.contextBarPosition === 'bottom');
 		root.toggleClass('pp-bar-off', s.contextBarContent === 'off');
 		root.toggleClass('pp-full-bleed', s.fullBleedMedia);
+		root.toggleClass('pp-sticky-headings', s.stickyHeadings);
+		this.updateStuckHeading(); // clears a stale pp-stuck when the toggle turns off
 		root.toggleClass('pp-force-dark', s.colorScheme === 'dark');
 		root.toggleClass('pp-force-light', s.colorScheme === 'light');
 		root.setAttribute('data-pp-unrevealed', s.unrevealedStyle);
@@ -384,6 +398,19 @@ export class PaperishPresentationView extends ItemView {
 			top: Math.max(0, target),
 			behavior: smooth && !reduced ? 'smooth' : 'auto',
 		});
+		this.updateStuckHeading(); // best-effort now; the scroll listener tracks the rest
+	}
+
+	/** Styling hook (§9): CSS cannot tell a sticky element in flow from a pinned
+	 *  one, so pp-stuck is toggled here. Rect comparison is stable while pinned —
+	 *  the pinned position is constant, so this cannot oscillate. */
+	private updateStuckHeading(): void {
+		const heading = this.slides[this.pos.slide]?.ownHeading;
+		if (!heading) return;
+		const stuck =
+			this.plugin.settings.stickyHeadings &&
+			heading.getBoundingClientRect().top <= this.contentContainer.getBoundingClientRect().top + 1;
+		heading.classList.toggle('pp-stuck', stuck);
 	}
 
 	private toggleFullscreen(): false {
