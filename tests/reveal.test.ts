@@ -166,4 +166,15 @@ describe('reveal: applyPosition', () => {
 		expect(slides[0].fragments.every((f) => f.classList.contains('pp-revealed'))).toBe(true);
 		expect(slides[1].fragments.every((f) => !f.classList.contains('pp-revealed'))).toBe(true);
 	});
+
+	it('marks elements of slides after the current one with .pp-upcoming', () => {
+		const { slides } = slidesFrom(DECK);
+		applyPosition(slides, { slide: 0, step: 0 });
+		// Future slide is fully upcoming — its heading too, so 'hidden' can hide it all.
+		expect(slides[1].elements.every((e) => e.classList.contains('pp-upcoming'))).toBe(true);
+		expect(slides[0].elements.every((e) => !e.classList.contains('pp-upcoming'))).toBe(true);
+		applyPosition(slides, { slide: 1, step: -1 });
+		expect(slides[1].elements.every((e) => !e.classList.contains('pp-upcoming'))).toBe(true);
+		expect(slides[0].elements.every((e) => !e.classList.contains('pp-upcoming'))).toBe(true);
+	});
 });

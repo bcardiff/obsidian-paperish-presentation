@@ -117,7 +117,12 @@ export function findSlideBySignature(slides: Slide[], sig: SlideSignature): numb
 export function applyPosition(slides: Slide[], pos: DeckPosition): void {
 	for (const s of slides) {
 		const off = s.index !== pos.slide;
-		for (const el of s.elements) el.classList.toggle('pp-offslide', off);
+		for (const el of s.elements) {
+			el.classList.toggle('pp-offslide', off);
+			// Direction-aware marker: 'hidden' un-revealed style hides upcoming
+			// slides wholesale — including their headings, which are not fragments.
+			el.classList.toggle('pp-upcoming', s.index > pos.slide);
+		}
 		// Reveal state is deck-global, not slide-local: past slides stay fully
 		// revealed and future slides stay unrevealed, so the 'hidden' unrevealed
 		// style can keep upcoming fragments invisible while they are off-slide (§5).

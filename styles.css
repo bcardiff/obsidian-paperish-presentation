@@ -91,6 +91,12 @@
 	visibility: hidden;
 	transform: translateY(var(--pp-frag-rise));
 }
+/* Upcoming slides hide entirely — headings are not fragments, so without this
+   the next slide's title would peek through the hidden style. */
+.paperish-presentation[data-pp-unrevealed='hidden'] .pp-doc .pp-upcoming {
+	opacity: 0;
+	visibility: hidden;
+}
 @media (prefers-reduced-motion: reduce) {
 	.paperish-presentation {
 		--pp-frag-rise: 0px;
