@@ -4,6 +4,7 @@
 	--pp-font-scale: 1.4;
 	--pp-max-width: 42rem;
 	--pp-media-max-h: 70vh;
+	--pp-frag-rise: 8px; /* hidden fragments enter from this offset; 0 under reduced motion */
 	display: grid;
 	grid-template-rows: auto 1fr;
 	height: 100%;
@@ -85,12 +86,14 @@
 .paperish-presentation[data-pp-unrevealed='hidden'] .pp-doc [data-pp-frag]:not(.pp-revealed):not(.pp-offslide):not(.pp-offslide *) {
 	opacity: 0;
 	visibility: hidden;
-	transform: translateY(8px);
+	transform: translateY(var(--pp-frag-rise));
 }
 @media (prefers-reduced-motion: reduce) {
+	.paperish-presentation {
+		--pp-frag-rise: 0px;
+	}
 	.paperish-presentation .pp-doc [data-pp-frag] {
 		transition: none;
-		transform: none !important;
 	}
 }
 
