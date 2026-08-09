@@ -156,6 +156,12 @@ export class PaperishPresentationView extends ItemView {
 		});
 	}
 
+	onResize(): void {
+		// Layout reflows via CSS, but the scroll anchoring depends on the viewport
+		// height (§12.2) — re-center the current position and refresh pp-stuck.
+		this.scrollToCurrent(false);
+	}
+
 	async onClose(): Promise<void> {
 		this.stopObserver();
 		if (this.barSwapTimer !== null) {
