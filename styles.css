@@ -214,13 +214,6 @@
 	z-index: 5;
 	background-color: var(--background-primary);
 }
-.paperish-presentation.pp-sticky-headings.pp-force-dark .pp-doc .pp-sticky-heading {
-	background-color: #1e1e1e;
-}
-.paperish-presentation.pp-sticky-headings.pp-force-light .pp-doc .pp-sticky-heading {
-	background-color: #ffffff;
-}
-
 /* Full-bleed media (§9): centered, may exceed the column, capped height */
 .paperish-presentation.pp-full-bleed .pp-doc :is(img, video) {
 	display: block;
@@ -265,14 +258,82 @@
 	font-style: italic;
 }
 
-/* Forced color scheme (§9): self-contained neutral palette, never flips the app theme */
+/* Forced color scheme (§9): the view toggles Obsidian's .theme-dark/.theme-light
+   class on the container, which scopes the BASE palette (--color-base-*, --mono-*,
+   --color-red…) to descendants. That alone is not enough: Obsidian's semantic vars
+   (--background-primary, --text-normal, …) are declared on body, where CSS
+   substitutes their var() references against the vault theme immediately —
+   descendants inherit the already-resolved colors. So the palette-dependent
+   semantic mappings are re-declared here (copied from Obsidian 1.13 app.css body
+   block) to re-substitute against the scoped base palette. Accent-derived vars are
+   NOT re-declared: the accent color is theme-independent and inherits correctly. */
 .paperish-presentation.pp-force-dark {
 	color-scheme: dark;
-	background-color: #1e1e1e;
-	color: #dcdcdc;
 }
 .paperish-presentation.pp-force-light {
 	color-scheme: light;
-	background-color: #ffffff;
-	color: #1f1f1f;
+}
+.paperish-presentation.pp-force-dark,
+.paperish-presentation.pp-force-light {
+	/* backgrounds, borders, text */
+	--background-primary: var(--color-base-00);
+	--background-primary-alt: var(--color-base-10);
+	--background-secondary: var(--color-base-20);
+	--background-modifier-hover: color-mix(in oklch, var(--mono-100) 6.7%, transparent);
+	--background-modifier-border: var(--color-base-30);
+	--background-modifier-border-hover: var(--color-base-35);
+	--background-modifier-border-focus: var(--color-base-40);
+	--text-normal: var(--color-base-100);
+	--text-muted: var(--color-base-70);
+	--text-faint: var(--color-base-50);
+	--text-error: var(--color-red);
+	--text-warning: var(--color-orange);
+	--text-success: var(--color-green);
+	/* code blocks + syntax */
+	--code-background: var(--background-primary-alt);
+	--code-border-color: var(--background-modifier-border);
+	--code-normal: var(--text-normal);
+	--code-comment: var(--text-faint);
+	--code-punctuation: var(--text-muted);
+	--code-function: var(--color-yellow);
+	--code-important: var(--color-orange);
+	--code-keyword: var(--color-pink);
+	--code-operator: var(--color-red);
+	--code-property: var(--color-cyan);
+	--code-string: var(--color-green);
+	--code-tag: var(--color-red);
+	--code-value: var(--color-purple);
+	/* callouts */
+	--callout-bug: var(--color-red);
+	--callout-default: var(--color-blue);
+	--callout-error: var(--color-red);
+	--callout-example: var(--color-purple);
+	--callout-fail: var(--color-red);
+	--callout-important: var(--color-cyan);
+	--callout-info: var(--color-blue);
+	--callout-question: var(--color-orange);
+	--callout-success: var(--color-green);
+	--callout-summary: var(--color-cyan);
+	--callout-tip: var(--color-cyan);
+	--callout-todo: var(--color-blue);
+	--callout-warning: var(--color-orange);
+	/* lists, checkboxes, tables, misc markdown */
+	--checkbox-marker-color: var(--background-primary);
+	--checkbox-border-color: var(--text-faint);
+	--checkbox-border-color-hover: var(--text-muted);
+	--checklist-done-color: var(--text-muted);
+	--list-marker-color: var(--text-faint);
+	--list-marker-color-hover: var(--text-muted);
+	--collapse-icon-color: var(--text-faint);
+	--table-border-color: var(--background-modifier-border);
+	--table-header-color: var(--text-normal);
+	--hr-color: var(--background-modifier-border);
+	--heading-formatting: var(--text-faint);
+	--footnote-id-color: var(--text-muted);
+	--footnote-id-color-no-occurrences: var(--text-faint);
+	--indentation-guide-color: color-mix(in oklch, var(--mono-100) 12%, transparent);
+	--indentation-guide-color-active: color-mix(in oklch, var(--mono-100) 30%, transparent);
+	--caret-color: var(--text-normal);
+	background-color: var(--background-primary);
+	color: var(--text-normal);
 }

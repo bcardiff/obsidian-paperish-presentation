@@ -188,6 +188,10 @@ export class PaperishPresentationView extends ItemView {
 		this.updateStuckHeading(); // clears a stale pp-stuck when the toggle turns off
 		root.toggleClass('pp-force-dark', s.colorScheme === 'dark');
 		root.toggleClass('pp-force-light', s.colorScheme === 'light');
+		// Obsidian's theme classes scope the base color palette (--color-base-*,
+		// --mono-*) to this container; styles.css re-maps the semantic vars (§9).
+		root.toggleClass('theme-dark', s.colorScheme === 'dark');
+		root.toggleClass('theme-light', s.colorScheme === 'light');
 		root.setAttribute('data-pp-unrevealed', s.unrevealedStyle);
 		root.setAttribute('data-pp-valign', s.verticalAlign);
 		const extra = this.plugin.settings.extraClasses.split(/\s+/).filter((c) => c.length > 0);
