@@ -15,6 +15,8 @@ Run **Paperish Presentation: Present current note** from the command palette. Th
 
 Within a slide, blocks reveal step by step (configurable: whole slides, blocks, or list items). A context bar shows the ancestor headings of the current slide.
 
+For large decks, run "Open slide outline" to get a sidebar panel listing every slide (indented by section, current slide highlighted) — click an entry to jump straight to it.
+
 When a slide is taller than the viewport, its heading pins to the top while you step through it ("Sticky slide heading" setting, on by default). While pinned the heading has the `pp-stuck` class, so a CSS snippet can restyle it — prefer `transform` over `font-size`, which would reflow the deck mid-scroll:
 
 ```css

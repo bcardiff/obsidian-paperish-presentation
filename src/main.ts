@@ -1,15 +1,19 @@
-import { MarkdownView, Plugin } from 'obsidian';
+import { Events, MarkdownView, Plugin } from 'obsidian';
 import { DEFAULT_SETTINGS, PaperishPresentationSettings, PaperishPresentationSettingTab } from './settings';
 import { PaperishPresentationView, VIEW_TYPE_PAPERISH_PRESENTATION } from './view';
+import { PaperishOutlineView, VIEW_TYPE_PAPERISH_OUTLINE } from './outlineview';
 
 export default class PaperishPresentationPlugin extends Plugin {
 	settings!: PaperishPresentationSettings;
+	/** In-plugin bus: presentation views trigger 'pp-outline' on deck/position changes. */
+	events = new Events();
 	private presentActionEls: HTMLElement[] = [];
 
 	async onload() {
 		await this.loadSettings();
 
 		this.registerView(VIEW_TYPE_PAPERISH_PRESENTATION, (leaf) => new PaperishPresentationView(leaf, this));
+		this.registerView(VIEW_TYPE_PAPERISH_OUTLINE, (leaf) => new PaperishOutlineView(leaf, this));
 
 		this.addCommand({
 			id: 'present-current-note',
@@ -31,6 +35,12 @@ export default class PaperishPresentationPlugin extends Plugin {
 				if (!checking) void view.refresh();
 				return true;
 			},
+		});
+
+		this.addCommand({
+			id: 'open-slide-outline',
+			name: 'Open slide outline',
+			callback: () => void this.openSlideOutline(),
 		});
 
 		this.addSettingTab(new PaperishPresentationSettingTab(this.app, this));
@@ -57,6 +67,14 @@ export default class PaperishPresentationPlugin extends Plugin {
 			el.addClass('pp-present-action');
 			this.presentActionEls.push(el);
 		}
+	}
+
+	async openSlideOutline() {
+		const existing = this.app.workspace.getLeavesOfType(VIEW_TYPE_PAPERISH_OUTLINE)[0];
+		const leaf = existing ?? this.app.workspace.getRightLeaf(false);
+		if (!leaf) return;
+		if (!existing) await leaf.setViewState({ type: VIEW_TYPE_PAPERISH_OUTLINE, active: true });
+		void this.app.workspace.revealLeaf(leaf);
 	}
 
 	async openPresentation(filePath: string) {

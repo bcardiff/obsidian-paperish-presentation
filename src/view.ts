@@ -15,6 +15,7 @@ import {
 	slideSignature,
 } from './reveal';
 import { buildTrailContent, trailsEqual } from './contextbar';
+import { OutlineItem, outlineItems } from './outline';
 
 export const VIEW_TYPE_PAPERISH_PRESENTATION = 'paperish-presentation-view';
 
@@ -120,9 +121,7 @@ export class PaperishPresentationView extends ItemView {
 			if (slideEl) {
 				const idx = Number(slideEl.getAttribute('data-pp-slide'));
 				if (Number.isFinite(idx) && idx !== this.pos.slide) {
-					const s = this.slides[idx];
-					const step = idx < this.pos.slide ? (s?.fragments.length ?? 0) - 1 : entryStep(s);
-					this.setPos({ slide: idx, step });
+					this.jumpTo(idx);
 					return;
 				}
 			}
@@ -290,6 +289,7 @@ export class PaperishPresentationView extends ItemView {
 			this.updateProgress();
 			this.scrollToCurrent(false);
 			this.startObserver();
+			this.plugin.events.trigger('pp-outline');
 		} finally {
 			if (seq === this.renderSeq) this.contentEl.removeClass('pp-loading');
 		}
@@ -350,6 +350,7 @@ export class PaperishPresentationView extends ItemView {
 		this.updateContextBar();
 		this.updateProgress();
 		this.scrollToCurrent(false); // content may have shifted; re-anchor without animation
+		this.plugin.events.trigger('pp-outline');
 	}
 
 	onSettingsChanged(breakAffecting: boolean): void {
@@ -372,6 +373,24 @@ export class PaperishPresentationView extends ItemView {
 		this.updateProgress();
 		if (slideChanged || stepChanged) this.scrollToCurrent(true);
 		if (slideChanged) this.updateContextBar();
+		if (slideChanged) this.plugin.events.trigger('pp-outline');
+	}
+
+	/** Jump to a slide with direction-aware reveal: forward enters at the entry
+	 *  step, backward arrives fully revealed — same semantics as neighbor clicks. */
+	jumpTo(index: number): void {
+		const s = this.slides[index];
+		if (!s || index === this.pos.slide) return;
+		const step = index < this.pos.slide ? s.fragments.length - 1 : entryStep(s);
+		this.setPos({ slide: index, step });
+	}
+
+	getOutline(): OutlineItem[] {
+		return outlineItems(this.slides);
+	}
+
+	currentSlideIndex(): number {
+		return this.pos.slide;
 	}
 
 	/** Offset of el relative to renderContainer, across nested offset contexts

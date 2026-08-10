@@ -239,6 +239,32 @@
 	object-fit: contain;
 }
 
+/* Slide outline panel (§6b) */
+.pp-outline .pp-outline-empty {
+	color: var(--text-faint);
+	padding: 0.5rem;
+}
+.pp-outline .pp-outline-item {
+	padding: 0.25rem 0.5rem;
+	padding-inline-start: calc(0.5rem + var(--pp-outline-indent, 0) * 1.1em);
+	border-radius: var(--radius-s);
+	cursor: pointer;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.pp-outline .pp-outline-item:hover {
+	background: var(--background-modifier-hover);
+}
+.pp-outline .pp-outline-item.is-active {
+	background: var(--background-modifier-active-hover);
+	color: var(--text-accent);
+}
+.pp-outline .pp-outline-snippet {
+	color: var(--text-muted);
+	font-style: italic;
+}
+
 /* Forced color scheme (§9): self-contained neutral palette, never flips the app theme */
 .paperish-presentation.pp-force-dark {
 	color-scheme: dark;
