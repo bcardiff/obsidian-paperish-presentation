@@ -152,3 +152,25 @@ describe('partition: fragments', () => {
 		expect(c.querySelector('ul')?.getAttribute('data-pp-frag')).toBe('0');
 	});
 });
+
+describe('partition: cover slide', () => {
+	const COVER = '<div class="pp-cover" data-pp-cover><div class="pp-cover-title">T</div><div class="pp-cover-desc">d</div></div>';
+
+	it('cover forms its own heading-less slide, never merging with intro content', () => {
+		const c = containerFrom(COVER + '<p>intro</p><h2>A</h2><p>a</p>');
+		const slides = partition(c, OPTS);
+		expect(slides.length).toBe(3);
+		expect(slides[0].elements.length).toBe(1);
+		expect(slides[0].elements[0].hasAttribute('data-pp-cover')).toBe(true);
+		expect(slides[0].ownHeading).toBeNull();
+		expect(slides[1].elements.map((e) => e.textContent)).toEqual(['intro']);
+	});
+
+	it('cover contributes no fragments and no trail', () => {
+		const c = containerFrom(COVER + '<h2>A</h2><p>a</p>');
+		const slides = partition(c, OPTS);
+		expect(slides[0].fragments).toEqual([]);
+		expect(slides[0].trail).toEqual([]);
+		expect(c.querySelector('[data-pp-cover]')?.getAttribute('data-pp-slide')).toBe('0');
+	});
+});

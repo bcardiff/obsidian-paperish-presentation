@@ -182,6 +182,28 @@
 	font-size: 1.6em;
 }
 
+/* Cover slide (§4): synthesized from frontmatter title/description (view.ts) */
+.paperish-presentation .pp-doc .pp-cover {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	text-align: center;
+	min-height: 60vh;
+	gap: 0.6em;
+}
+.paperish-presentation .pp-doc .pp-cover-title {
+	font-size: 2.6em;
+	font-weight: 800;
+	letter-spacing: -0.02em;
+	line-height: 1.1;
+}
+.paperish-presentation .pp-doc .pp-cover-desc {
+	font-size: 1.15em;
+	font-weight: 400;
+	color: var(--text-muted);
+}
+
 /* Sticky slide heading (§9): only the current slide's own heading carries
    .pp-sticky-heading (reveal.ts) — all slides share one containing block, so
    sticky on every heading would pile them up at the top. While actually pinned

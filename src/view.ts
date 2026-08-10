@@ -264,8 +264,21 @@ export class PaperishPresentationView extends ItemView {
 		try {
 			let markdown = await this.app.vault.cachedRead(file);
 			if (seq !== this.renderSeq) return;
-			const fmPos = this.app.metadataCache.getFileCache(file)?.frontmatterPosition;
+			const cache = this.app.metadataCache.getFileCache(file);
+			const fmPos = cache?.frontmatterPosition;
 			if (fmPos) markdown = markdown.slice(fmPos.end.offset).replace(/^\s+/, '');
+
+			// Cover slide (§4): synthesized before the markdown lands, so partition
+			// and navigation treat it like ordinary content. No heading — it stays
+			// out of the trail and never sticks, structurally.
+			const fm = cache?.frontmatter;
+			const title = typeof fm?.title === 'string' ? fm.title : null;
+			if (title) {
+				const cover = this.renderContainer.createDiv({ cls: 'pp-cover', attr: { 'data-pp-cover': '' } });
+				cover.createDiv({ cls: 'pp-cover-title', text: title });
+				const desc = typeof fm?.description === 'string' ? fm.description : null;
+				if (desc) cover.createDiv({ cls: 'pp-cover-desc', text: desc });
+			}
 
 			await MarkdownRenderer.render(this.app, markdown, this.renderContainer, file.path, this.renderComponent);
 			if (seq !== this.renderSeq) return;

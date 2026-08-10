@@ -34,7 +34,7 @@ function computeFragments(slide: Slide, mode: PartitionOptions['revealMode']): H
 	if (mode === 'none') return [];
 	const fragments: HTMLElement[] = [];
 	for (const el of slide.elements) {
-		if (el === slide.ownHeading || el.tagName === 'HR') continue;
+		if (el === slide.ownHeading || el.tagName === 'HR' || el.hasAttribute('data-pp-cover')) continue;
 		if (mode === 'list-items' && (el.tagName === 'UL' || el.tagName === 'OL')) {
 			for (const li of Array.from(el.children)) {
 				if (li.instanceOf(HTMLElement) && li.tagName === 'LI') fragments.push(li);
@@ -71,6 +71,14 @@ export function partition(container: HTMLElement, options: PartitionOptions): Sl
 
 	for (const child of Array.from(container.children)) {
 		if (!child.instanceOf(HTMLElement)) continue;
+
+		// Cover slide (view.ts synthesizes it from frontmatter title/description):
+		// always stands alone, like an H1 title slide (§4).
+		if (child.hasAttribute('data-pp-cover')) {
+			openSlide(null).elements.push(child);
+			current = null;
+			continue;
+		}
 
 		if (child.tagName === 'HR' && options.hrBreaks) {
 			child.setAttribute('data-pp-hr', '');

@@ -27,7 +27,8 @@ When a slide is taller than the viewport, its heading pins to the top while you 
 
 ## Per-note options
 
-Frontmatter `slides-break: h1 | h2 | h3` overrides the break level for that note.
+- `slides-break: h1 | h2 | h3` overrides the break level for that note.
+- `title` (plus optional `description`) adds a cover slide at the start of the presentation: title large, description smaller and muted, both centered. The cover never appears in the context bar and never sticks.
 
 ## Notes and limitations (v1)
 
