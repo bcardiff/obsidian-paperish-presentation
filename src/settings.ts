@@ -14,6 +14,7 @@ export type EscBehavior = 'close' | 'source';
 export interface PaperishPresentationSettings {
 	breakLevel: BreakLevel;
 	hrBreaks: boolean;
+	hidePresenterNotes: boolean;
 	revealMode: RevealMode;
 	unrevealedStyle: UnrevealedStyle;
 	contextBarContent: ContextBarContent;
@@ -28,12 +29,14 @@ export interface PaperishPresentationSettings {
 	progressIndicator: ProgressIndicator;
 	escBehavior: EscBehavior;
 	refreshOnFocus: boolean;
+	syncEditorFromDeck: boolean;
 	extraClasses: string;
 }
 
 export const DEFAULT_SETTINGS: PaperishPresentationSettings = {
 	breakLevel: 2,
 	hrBreaks: true,
+	hidePresenterNotes: true,
 	revealMode: 'blocks',
 	unrevealedStyle: 'dimmed',
 	contextBarContent: 'ancestors',
@@ -48,6 +51,7 @@ export const DEFAULT_SETTINGS: PaperishPresentationSettings = {
 	progressIndicator: 'bar',
 	escBehavior: 'source',
 	refreshOnFocus: true,
+	syncEditorFromDeck: false,
 	extraClasses: '',
 };
 
@@ -69,6 +73,11 @@ export class PaperishPresentationSettingTab extends PluginSettingTab {
 			{
 				name: 'Horizontal rule forces slide break',
 				control: { type: 'toggle', key: 'hrBreaks' },
+			},
+			{
+				name: 'Hide presenter notes',
+				desc: 'Remove [!presenter] callouts from the presentation. The note itself is unchanged.',
+				control: { type: 'toggle', key: 'hidePresenterNotes' },
 			},
 			{
 				name: 'Reveal mode',
@@ -134,6 +143,11 @@ export class PaperishPresentationSettingTab extends PluginSettingTab {
 				control: { type: 'toggle', key: 'refreshOnFocus' },
 			},
 			{
+				name: 'Sync editor from deck',
+				desc: "Scroll the note's own tab to the current slide's heading while you present. One-way: scrolling the note never moves the deck.",
+				control: { type: 'toggle', key: 'syncEditorFromDeck' },
+			},
+			{
 				name: 'Extra container classes',
 				desc: 'Space-separated classes added to the presentation container, for CSS snippets.',
 				control: { type: 'text', key: 'extraClasses' },
@@ -150,6 +164,9 @@ export class PaperishPresentationSettingTab extends PluginSettingTab {
 	async setControlValue(key: string, value: unknown): Promise<void> {
 		await super.setControlValue(key, key === 'breakLevel' ? Number(value) : value);
 		const breakAffecting = key === 'breakLevel' || key === 'hrBreaks' || key === 'revealMode';
-		this.plugin.notifySettingsChanged(breakAffecting);
+		// Stripped notes are gone from the DOM, so turning the toggle off can only
+		// bring them back by re-rendering the note.
+		const rerenderAffecting = key === 'hidePresenterNotes';
+		this.plugin.notifySettingsChanged(breakAffecting, rerenderAffecting);
 	}
 }

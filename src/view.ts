@@ -1,4 +1,13 @@
-import { Component, ItemView, MarkdownRenderer, Scope, TFile, ViewStateResult, WorkspaceLeaf } from 'obsidian';
+import {
+	Component,
+	ItemView,
+	MarkdownRenderer,
+	MarkdownView,
+	Scope,
+	TFile,
+	ViewStateResult,
+	WorkspaceLeaf,
+} from 'obsidian';
 import type PaperishPresentationPlugin from './main';
 import { partition, PartitionOptions, Slide } from './partition';
 import {
@@ -15,6 +24,8 @@ import {
 	slideSignature,
 } from './reveal';
 import { buildTrailContent, trailsEqual } from './contextbar';
+import { stripPresenterNotes } from './presenter';
+import { sourceLineForSlide } from './sync';
 import { OutlineItem, outlineItems } from './outline';
 
 export const VIEW_TYPE_PAPERISH_PRESENTATION = 'paperish-presentation-view';
@@ -248,6 +259,7 @@ export class PaperishPresentationView extends ItemView {
 		this.updateContextBar();
 		this.updateProgress();
 		this.scrollToCurrent(false);
+		this.syncSourceView();
 	}
 
 	private async renderFile(): Promise<void> {
@@ -294,12 +306,17 @@ export class PaperishPresentationView extends ItemView {
 			this.scrollToCurrent(false);
 			this.startObserver();
 			this.plugin.events.trigger('pp-outline');
+			this.syncSourceView();
 		} finally {
 			if (seq === this.renderSeq) this.contentEl.removeClass('pp-loading');
 		}
 	}
 
 	private repartition(): void {
+		// Strip before partitioning, and on every repartition rather than once per
+		// render, so presenter callouts that arrive late (async postprocessors,
+		// embeds) never reach the deck.
+		if (this.plugin.settings.hidePresenterNotes) stripPresenterNotes(this.renderContainer);
 		this.slides = partition(this.renderContainer, this.partitionOptions());
 	}
 
@@ -357,9 +374,12 @@ export class PaperishPresentationView extends ItemView {
 		this.plugin.events.trigger('pp-outline');
 	}
 
-	onSettingsChanged(breakAffecting: boolean): void {
+	onSettingsChanged(breakAffecting: boolean, rerenderAffecting = false): void {
 		this.applySettings();
-		if (breakAffecting) {
+		if (rerenderAffecting) {
+			// The strip is destructive: restoring the notes means re-rendering (§10.8).
+			void this.refresh();
+		} else if (breakAffecting) {
 			this.repartitionPreservingPosition();
 		} else {
 			applyPosition(this.slides, this.pos);
@@ -367,6 +387,7 @@ export class PaperishPresentationView extends ItemView {
 			this.updateProgress();
 			this.scrollToCurrent(false); // e.g. verticalAlign changed
 		}
+		this.syncSourceView(); // picks up the sync toggle being switched on
 	}
 
 	private setPos(pos: DeckPosition): void {
@@ -378,6 +399,36 @@ export class PaperishPresentationView extends ItemView {
 		if (slideChanged || stepChanged) this.scrollToCurrent(true);
 		if (slideChanged) this.updateContextBar();
 		if (slideChanged) this.plugin.events.trigger('pp-outline');
+		if (slideChanged) this.syncSourceView();
+	}
+
+	/**
+	 * Scroll the note's own tab to the current slide's heading (§7b). One-way and
+	 * opt-in: the deck drives, and a note that is not open anywhere is left alone
+	 * rather than opened. Heading granularity — blocks within a slide carry no
+	 * line information in the rendered DOM.
+	 */
+	private syncSourceView(): void {
+		if (!this.plugin.settings.syncEditorFromDeck) return;
+		const path = this.filePath;
+		if (!path || this.slides.length === 0) return;
+		const file = this.app.vault.getFileByPath(path);
+		if (!(file instanceof TFile)) return;
+		const cache = this.app.metadataCache.getFileCache(file);
+		if (!cache) return;
+		const { breakLevel, hrBreaks } = this.partitionOptions();
+		const line = sourceLineForSlide(
+			(cache.sections ?? []).map((s) => ({ type: s.type, line: s.position.start.line })),
+			(cache.headings ?? []).map((h) => ({ heading: h.heading, level: h.level, line: h.position.start.line })),
+			slideSignature(this.slides, this.pos.slide),
+			{ breakLevel, hrBreaks },
+		);
+		if (line === null) return;
+		for (const leaf of this.app.workspace.getLeavesOfType('markdown')) {
+			const view = leaf.view;
+			// Never the presentation's own leaf: this view is not a MarkdownView.
+			if (view instanceof MarkdownView && view.file?.path === path) view.setEphemeralState({ line });
+		}
 	}
 
 	/** Jump to a slide with direction-aware reveal: forward enters at the entry

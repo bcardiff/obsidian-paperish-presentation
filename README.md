@@ -27,10 +27,21 @@ When a slide is taller than the viewport, its heading pins to the top while you 
 }
 ```
 
+Notes you want to keep for yourself go in a `presenter` callout — they are removed from the deck entirely, so they take no space and no reveal step:
+
+```md
+> [!presenter]
+> Slow down here. Ask about last quarter's numbers.
+```
+
+Turn off "Hide presenter notes" in settings to present them along with everything else.
+
 ## Per-note options
 
 - `slides-break: h1 | h2 | h3` overrides the break level for that note.
 - `title` (plus optional `description`) adds a cover slide at the start of the presentation: title large, description smaller and muted, both centered. The cover never appears in the context bar and never sticks.
+
+Turn on "Sync editor from deck" and the note's own tab scrolls along as you move between slides, to the current slide's heading. It is one-way — scrolling the note never moves the deck — and it only touches tabs that are already open on that note.
 
 ## Notes and limitations (v1)
 

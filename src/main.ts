@@ -95,9 +95,10 @@ export default class PaperishPresentationPlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 
-	notifySettingsChanged(breakAffecting: boolean) {
+	notifySettingsChanged(breakAffecting: boolean, rerenderAffecting = false) {
 		for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_PAPERISH_PRESENTATION)) {
-			if (leaf.view instanceof PaperishPresentationView) leaf.view.onSettingsChanged(breakAffecting);
+			if (leaf.view instanceof PaperishPresentationView)
+				leaf.view.onSettingsChanged(breakAffecting, rerenderAffecting);
 		}
 	}
 }
