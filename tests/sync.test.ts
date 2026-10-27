@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { SourceHeading, SourceSection, SourceMapOptions, sourceLineForSlide } from '../src/sync';
+import {
+	SourceHeading,
+	SourceSection,
+	SourceMapOptions,
+	signatureForSourceLine,
+	sourceLineForSlide,
+} from '../src/sync';
 import type { SlideSignature } from '../src/reveal';
 
 const OPTS: SourceMapOptions = { breakLevel: 2, hrBreaks: true };
@@ -115,5 +121,98 @@ describe('sourceLineForSlide: counting slides past the heading', () => {
 			hrBreaks: true,
 		});
 		expect(line).toBe(1); // content after the H1 title slide, H2 included in it
+	});
+});
+
+describe('signatureForSourceLine: locating a slide from a cursor line', () => {
+	it('anchors on the heading the cursor sits on', () => {
+		const { sections, headings } = source(['## A', 'a', '## B', 'b']);
+		expect(signatureForSourceLine(sections, headings, 2, OPTS)).toMatchObject({
+			headingText: 'B',
+			headingLevel: 2,
+			occurrence: 0,
+			offset: 0,
+		});
+	});
+
+	it('anchors on the preceding heading for content under it', () => {
+		const { sections, headings } = source(['## A', 'a', 'b', '## B']);
+		expect(signatureForSourceLine(sections, headings, 2, OPTS)).toMatchObject({ headingText: 'A', offset: 0 });
+	});
+
+	it('counts the --- breaks between the heading and the cursor', () => {
+		const { sections, headings } = source(['## A', 'a', '---', 'b', '---', 'c']);
+		const at = (line: number) => signatureForSourceLine(sections, headings, line, OPTS)?.offset;
+		expect([at(1), at(3), at(5)]).toEqual([0, 1, 2]);
+	});
+
+	it('puts the cursor sitting on a --- line on the slide before it', () => {
+		const { sections, headings } = source(['## A', 'a', '---', 'b']);
+		expect(signatureForSourceLine(sections, headings, 2, OPTS)?.offset).toBe(0);
+	});
+
+	it('records which occurrence of a repeated heading the cursor is under', () => {
+		const { sections, headings } = source(['## Demo', 'a', '## Demo', 'b', '## Demo', 'c']);
+		expect(signatureForSourceLine(sections, headings, 3, OPTS)).toMatchObject({
+			headingText: 'Demo',
+			occurrence: 1,
+		});
+	});
+
+	it('ignores headings deeper than the break level when anchoring', () => {
+		const { sections, headings } = source(['## A', 'a', '---', '### B', 'b']);
+		expect(signatureForSourceLine(sections, headings, 4, OPTS)).toMatchObject({
+			headingText: 'A',
+			headingLevel: 2,
+			offset: 1,
+		});
+	});
+
+	it('treats content under an H1 as the slide after its title slide', () => {
+		const { sections, headings } = source(['# T', 'a', 'b']);
+		expect(signatureForSourceLine(sections, headings, 2, OPTS)).toMatchObject({ headingText: 'T', offset: 1 });
+	});
+
+	it('does not count --- breaks when hr breaks are off', () => {
+		const { sections, headings } = source(['## A', 'a', '---', 'b']);
+		const sigAt = signatureForSourceLine(sections, headings, 3, { breakLevel: 2, hrBreaks: false });
+		expect(sigAt?.offset).toBe(0);
+	});
+
+	it('respects a shallower break level: an H2 no longer anchors', () => {
+		const { sections, headings } = source(['# T', 'a', '## A', 'b']);
+		expect(signatureForSourceLine(sections, headings, 3, { breakLevel: 1, hrBreaks: true })).toMatchObject({
+			headingText: 'T',
+			headingLevel: 1,
+			offset: 1,
+		});
+	});
+
+	it('returns null for a cursor before the first heading', () => {
+		const { sections, headings } = source(['a', 'b', '## A']);
+		expect(signatureForSourceLine(sections, headings, 1, OPTS)).toBeNull();
+	});
+
+	it('round-trips with sourceLineForSlide: every slide line maps back to its own slide', () => {
+		const { sections, headings } = source(['# T', 'a', '## A', 'b', '---', 'c', '## A', 'd', '---', 'e', '---', 'f']);
+		const sigs = [
+			sig({ headingText: 'T', headingLevel: 1, offset: 0 }),
+			sig({ headingText: 'T', headingLevel: 1, offset: 1 }),
+			sig({ headingText: 'A', headingLevel: 2, offset: 0 }),
+			sig({ headingText: 'A', headingLevel: 2, offset: 1 }),
+			sig({ headingText: 'A', headingLevel: 2, occurrence: 1, offset: 0 }),
+			sig({ headingText: 'A', headingLevel: 2, occurrence: 1, offset: 1 }),
+			sig({ headingText: 'A', headingLevel: 2, occurrence: 1, offset: 2 }),
+		];
+		for (const expected of sigs) {
+			const line = sourceLineForSlide(sections, headings, expected, OPTS);
+			expect(line).not.toBeNull();
+			expect(signatureForSourceLine(sections, headings, line!, OPTS)).toMatchObject({
+				headingText: expected.headingText,
+				headingLevel: expected.headingLevel,
+				occurrence: expected.occurrence,
+				offset: expected.offset,
+			});
+		}
 	});
 });

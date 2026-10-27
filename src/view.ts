@@ -1,4 +1,5 @@
 import {
+	CachedMetadata,
 	Component,
 	ItemView,
 	MarkdownRenderer,
@@ -25,10 +26,22 @@ import {
 } from './reveal';
 import { buildTrailContent, trailsEqual } from './contextbar';
 import { stripPresenterNotes } from './presenter';
-import { sourceLineForSlide } from './sync';
+import { signatureForSourceLine, sourceLineForSlide } from './sync';
 import { OutlineItem, outlineItems } from './outline';
 
 export const VIEW_TYPE_PAPERISH_PRESENTATION = 'paperish-presentation-view';
+
+/** metadataCache shapes, narrowed to the plain data src/sync.ts works on. */
+function sourceMapOf(cache: CachedMetadata) {
+	return {
+		sections: (cache.sections ?? []).map((s) => ({ type: s.type, line: s.position.start.line })),
+		headings: (cache.headings ?? []).map((h) => ({
+			heading: h.heading,
+			level: h.level,
+			line: h.position.start.line,
+		})),
+	};
+}
 
 export class PaperishPresentationView extends ItemView {
 	private plugin: PaperishPresentationPlugin;
@@ -47,6 +60,8 @@ export class PaperishPresentationView extends ItemView {
 	private lastTrail: HTMLElement[] = [];
 	private appliedExtraClasses: string[] = [];
 	private sourceDirty = false;
+	/** Where the next (re)position should land: a source line, the deck's top, or nothing asked. */
+	private pendingStart: number | 'top' | null = null;
 	private stuckRaf: number | null = null;
 
 	constructor(leaf: WorkspaceLeaf, plugin: PaperishPresentationPlugin) {
@@ -96,11 +111,21 @@ export class PaperishPresentationView extends ItemView {
 
 	async setState(state: unknown, result: ViewStateResult): Promise<void> {
 		await super.setState(state, result);
+		const start = (state as { start?: unknown })?.start;
+		if (typeof start === 'number' || start === 'top') this.pendingStart = start;
 		const filePath = (state as { filePath?: unknown })?.filePath;
 		if (typeof filePath === 'string' && filePath !== this.filePath) {
 			this.filePath = filePath;
 			if (this.renderContainer) await this.renderFile();
+		} else if (this.pendingStart !== null && this.slides.length > 0) {
+			// Same note, already rendered: jump in place rather than re-render (§7b).
+			this.setPos(this.initialPosition(this.fileCache()));
 		}
+	}
+
+	private fileCache(): CachedMetadata | null {
+		const file = this.filePath ? this.app.vault.getFileByPath(this.filePath) : null;
+		return file instanceof TFile ? this.app.metadataCache.getFileCache(file) : null;
 	}
 
 	async onOpen(): Promise<void> {
@@ -299,7 +324,7 @@ export class PaperishPresentationView extends ItemView {
 			if (seq !== this.renderSeq) return;
 
 			this.repartition();
-			this.pos = first(this.slides);
+			this.pos = this.initialPosition(cache);
 			applyPosition(this.slides, this.pos);
 			this.updateContextBar();
 			this.updateProgress();
@@ -310,6 +335,24 @@ export class PaperishPresentationView extends ItemView {
 		} finally {
 			if (seq === this.renderSeq) this.contentEl.removeClass('pp-loading');
 		}
+	}
+
+	/**
+	 * Where the deck opens: its first slide, or — when the caller asked to start
+	 * from a source line (§7b) — the slide that line falls on, at its natural
+	 * entry step rather than mid-reveal. One-shot: the request is consumed here,
+	 * so a later refresh restores the position it finds instead.
+	 */
+	private initialPosition(cache: CachedMetadata | null): DeckPosition {
+		const line = this.pendingStart;
+		this.pendingStart = null;
+		if (typeof line !== 'number' || !cache) return first(this.slides);
+		const { breakLevel, hrBreaks } = this.partitionOptions();
+		const { sections, headings } = sourceMapOf(cache);
+		const sig = signatureForSourceLine(sections, headings, line, { breakLevel, hrBreaks });
+		if (sig === null) return first(this.slides);
+		const slide = findSlideBySignature(this.slides, sig);
+		return { slide, step: entryStep(this.slides[slide]) };
 	}
 
 	private repartition(): void {
@@ -417,12 +460,11 @@ export class PaperishPresentationView extends ItemView {
 		const cache = this.app.metadataCache.getFileCache(file);
 		if (!cache) return;
 		const { breakLevel, hrBreaks } = this.partitionOptions();
-		const line = sourceLineForSlide(
-			(cache.sections ?? []).map((s) => ({ type: s.type, line: s.position.start.line })),
-			(cache.headings ?? []).map((h) => ({ heading: h.heading, level: h.level, line: h.position.start.line })),
-			slideSignature(this.slides, this.pos.slide),
-			{ breakLevel, hrBreaks },
-		);
+		const { sections, headings } = sourceMapOf(cache);
+		const line = sourceLineForSlide(sections, headings, slideSignature(this.slides, this.pos.slide), {
+			breakLevel,
+			hrBreaks,
+		});
 		if (line === null) return;
 		for (const leaf of this.app.workspace.getLeavesOfType('markdown')) {
 			const view = leaf.view;

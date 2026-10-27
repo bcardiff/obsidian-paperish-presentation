@@ -75,3 +75,60 @@ export function sourceLineForSlide(
 	}
 	return lastLine; // offset ran past the region: clamp to its last slide
 }
+
+/**
+ * Inverse of sourceLineForSlide: the signature of the slide a source line falls
+ * on, for opening the deck where the reader already is (§7b). Feeds straight
+ * into findSlideBySignature (§10.8), so no new resolution machinery is needed.
+ *
+ * Returns null when no heading precedes the line — the caller then starts the
+ * deck at its first slide.
+ */
+export function signatureForSourceLine(
+	sections: SourceSection[],
+	headings: SourceHeading[],
+	line: number,
+	options: SourceMapOptions,
+): SlideSignature | null {
+	// Only headings that open a slide can anchor one; deeper ones are content.
+	let anchor: SourceHeading | null = null;
+	for (const h of headings) {
+		if (h.line > line) break;
+		if (h.level <= options.breakLevel) anchor = h;
+	}
+	if (anchor === null) return null;
+
+	let occurrence = 0;
+	for (const h of headings) {
+		if (h === anchor) break;
+		if (h.heading === anchor.heading && h.level === anchor.level) occurrence++;
+	}
+
+	const levelAt = new Map(headings.map((h) => [h.line, h.level]));
+	const start = sections.findIndex((s) => s.line === anchor.line && s.type === 'heading');
+	// Same break-rule replay as sourceLineForSlide (§4), counting slides opened
+	// between the anchor heading and the line rather than walking to an offset.
+	let open = anchor.level !== 1;
+	let offset = 0;
+	for (const section of start < 0 ? [] : sections.slice(start + 1)) {
+		if (section.line > line) break;
+		const level = section.type === 'heading' ? levelAt.get(section.line) : undefined;
+		if (level !== undefined && level <= options.breakLevel) break;
+		if (section.type === 'thematicBreak' && options.hrBreaks) {
+			open = false; // a line sitting on the `---` itself belongs to the slide before it
+			continue;
+		}
+		if (!open) {
+			offset++;
+			open = true;
+		}
+	}
+
+	return {
+		headingText: anchor.heading,
+		headingLevel: anchor.level,
+		occurrence,
+		offset,
+		fallbackIndex: 0, // unknown deck index: fall back to the first slide, never a guess
+	};
+}

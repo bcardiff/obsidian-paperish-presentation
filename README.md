@@ -4,7 +4,11 @@ Present any Obsidian note as minimal, typography-driven slides — the way Dropb
 
 ## Usage
 
-Run **Paperish Presentation: Present current note** from the command palette. The note opens as slides in a new tab, split at headings (H2 by default) and `---` rules.
+Run **Paperish Presentation: Present current note** from the command palette. The note opens as slides, split at headings (H2 by default) and `---` rules. Presenting reuses the deck tab if one is already open, so it never piles up tabs.
+
+The presentation icon in a note's tab header opens the deck from the start. Once a deck is up, that same click becomes a jump: it lands on the slide your cursor sits on, counting `---` breaks since the last heading so several slides under one heading still resolve to the right one. ⌘-click still starts from the top — Ctrl-click on Windows and Linux, since ⌃-click is a secondary click on macOS. The icon's tooltip says which of the two you'll get. A jump leaves the cursor in the note, so you can keep writing with the deck following along beside you; starting a deck moves you into it. In reading mode, where there is no cursor, the top of what's on screen stands in for it.
+
+**Present current note** and **Present current note from here** are the same two gestures from the palette. Either way the open deck is reused and repositioned in place — on the note it is already showing, that is a jump with no re-render.
 
 - **Next:** →, ↓, Space, PageDown, or click/tap
 - **Previous:** ←, ↑, Shift+Space, PageUp
@@ -41,7 +45,7 @@ Turn off "Hide presenter notes" in settings to present them along with everythin
 - `slides-break: h1 | h2 | h3` overrides the break level for that note.
 - `title` (plus optional `description`) adds a cover slide at the start of the presentation: title large, description smaller and muted, both centered. The cover never appears in the context bar and never sticks.
 
-Turn on "Sync editor from deck" and the note's own tab scrolls along as you move between slides, to the current slide's heading. It is one-way — scrolling the note never moves the deck — and it only touches tabs that are already open on that note.
+Those two work in either direction: open the deck where you were reading, or turn on "Sync editor from deck" and the note's own tab scrolls along as you move between slides, to the current slide's heading. It is one-way — scrolling the note never moves the deck — and it only touches tabs that are already open on that note.
 
 ## Notes and limitations (v1)
 
